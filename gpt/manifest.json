@@ -1,0 +1,26 @@
+{
+  "manifest_version": 2,
+  "name": "ChatGPT TOC",
+  "version": "1.0",
+  "description": "Adds a Table of Contents to ChatGPT.com",
+  "icons": {
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "permissions": [
+    "*://chatgpt.com/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["*://chatgpt.com/*"],
+      "js": ["code.js"],
+      "css": ["code.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "gpttoc@aosl.jb"
+    }
+  }
+}
