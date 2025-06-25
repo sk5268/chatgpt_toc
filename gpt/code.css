@@ -15,6 +15,10 @@
     max-width: 340px;
     margin-top: 0 !important;
     margin-left: 0 !important;
+    max-height: 70vh; /* Limit height of TOC */
+    overflow: visible; /* Don't scroll the container itself */
+    display: flex;
+    flex-direction: column;
 }
 
 #chatgpt-toc-extension h2 {
@@ -35,6 +39,8 @@
     margin: 0;
     position: relative;
     padding-left: 22px;
+    overflow-y: auto; /* Enable vertical scrolling for the list */
+    max-height: 55vh; /* Take up most of the container, adjust as needed */
 }
 
 #chatgpt-toc-extension ul::before {
@@ -56,7 +62,7 @@
 }
 
 #chatgpt-toc-extension li::before {
-    content: attr(data-toc-num);
+    content: ""; /* Remove numbers from circles */
     position: absolute;
     left: -23px;
     top: 13px;
