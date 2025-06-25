@@ -47,14 +47,10 @@
     display: none; /* Remove the fixed line */
 }
 
-#chatgpt-toc-extension li:first-child::after {
-    display: none; /* Remove the problematic line */
-}
-
-#chatgpt-toc-extension li:not(:last-child)::after {
+#chatgpt-toc-extension li:nth-child(n+1):not(:last-child)::after {
     content: "";
     position: absolute;
-    left: -16px; /* Center on the circle */
+    left: -20px; /* Move slightly left from -16px */
     top: 27px; /* Start below current circle */
     width: 4px;
     height: calc(100% + 10px); /* Extend to next item */
@@ -72,7 +68,7 @@
 #chatgpt-toc-extension li::before {
     content: ""; /* Remove numbers from circles */
     position: absolute;
-    left: -23px; /* 14px (line) - 7px (half circle width) */
+    left: -25px; /* Move slightly left from -23px */
     top: 13px;
     width: 14px;
     height: 14px;
