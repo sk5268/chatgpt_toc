@@ -38,18 +38,26 @@
     padding: 0;
     margin: 0;
     position: relative;
-    padding-left: 22px;
+    padding-left: 32px; /* was 22px, increase to push content right */
     overflow-y: auto; /* Enable vertical scrolling for the list */
     max-height: 55vh; /* Take up most of the container, adjust as needed */
 }
 
 #chatgpt-toc-extension ul::before {
+    display: none; /* Remove the fixed line */
+}
+
+#chatgpt-toc-extension li:first-child::after {
+    display: none; /* Remove the problematic line */
+}
+
+#chatgpt-toc-extension li:not(:last-child)::after {
     content: "";
     position: absolute;
-    left: 4px;
-    top: 0;
-    bottom: 0;
+    left: -16px; /* Center on the circle */
+    top: 27px; /* Start below current circle */
     width: 4px;
+    height: calc(100% + 10px); /* Extend to next item */
     background: linear-gradient(180deg, #40b8cd 0%, #3e5bff 100%);
     border-radius: 2px;
     box-shadow: 0 0 8px 2px #40b8cd66;
@@ -64,7 +72,7 @@
 #chatgpt-toc-extension li::before {
     content: ""; /* Remove numbers from circles */
     position: absolute;
-    left: -23px;
+    left: -23px; /* 14px (line) - 7px (half circle width) */
     top: 13px;
     width: 14px;
     height: 14px;
@@ -77,7 +85,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 1;
+    z-index: 2; /* Ensure circles stay above the line */
     border: 1px solid #fff2;
     pointer-events: none;
 }
