@@ -53,19 +53,8 @@ function createTOC() {
     });
 
     if (tocList.children.length > 0) {
-        // Try to append to the right sidebar if it exists, else body
-        const rightSidebar = document.querySelector('nav, aside, .flex.h-full.flex-col'); // fallback selectors
-        if (rightSidebar) {
-            rightSidebar.style.position = 'relative';
-            tocContainer.style.position = 'absolute';
-            tocContainer.style.top = '30px';
-            tocContainer.style.right = '20px';
-            tocContainer.style.margin = '0';
-            tocContainer.style.zIndex = '10000';
-            rightSidebar.appendChild(tocContainer);
-        } else {
-            document.body.appendChild(tocContainer);
-        }
+        // Always append to body, let CSS handle positioning and scrolling
+        document.body.appendChild(tocContainer);
     } else {
         console.log("TOC list is empty, not appending.");
     }
@@ -100,6 +89,14 @@ document.addEventListener('click', function(event) {
     }
 }, true);
 
+// Listen for Enter key presses anywhere
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Enter') {
+        setTimeout(() => {
+            createTOC();
+        }, 80); // Delay to allow DOM update
+    }
+}, true);
 // Listen for Enter key presses anywhere
 document.addEventListener('keydown', function(event) {
     if (event.key === 'Enter') {
