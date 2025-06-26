@@ -70,10 +70,32 @@ if (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.onMessage)
   });
 }
 
+// Track current chat ID
+let currentChatId = null;
+
+function getCurrentChatId() {
+    const url = window.location.href;
+    const match = url.match(/chatgpt\.com\/c\/([^/?#]+)/);
+    return match ? match[1] : null;
+}
+
+function checkForChatChange() {
+    const newChatId = getCurrentChatId();
+    if (newChatId !== currentChatId) {
+        console.log(`Chat changed from ${currentChatId} to ${newChatId}`);
+        currentChatId = newChatId;
+        // Delay to allow new chat content to load
+        setTimeout(() => {
+            createTOC();
+        }, 1000);
+    }
+}
+
 // Run createTOC 3 seconds after every page load (refresh, redirect, SPA navigation)
 function delayedCreateTOC() {
     setTimeout(() => {
         console.log('Calling createTOC 3 seconds after page load or navigation');
+        currentChatId = getCurrentChatId(); // Initialize current chat ID
         createTOC();
         console.log("Called createTOC");
     }, 3000);
@@ -82,6 +104,19 @@ function delayedCreateTOC() {
 window.addEventListener('load', delayedCreateTOC);
 window.addEventListener('pageshow', delayedCreateTOC);
 
+// Monitor URL changes for SPA navigation
+let lastUrl = location.href;
+new MutationObserver(() => {
+    const url = location.href;
+    if (url !== lastUrl) {
+        lastUrl = url;
+        checkForChatChange();
+    }
+}).observe(document, { subtree: true, childList: true });
+
+// Also check for URL changes on popstate (back/forward button)
+window.addEventListener('popstate', checkForChatChange);
+
 // Listen for mouse clicks on any button
 document.addEventListener('click', function(event) {
     if (event.target.tagName === 'BUTTON') {
@@ -89,14 +124,6 @@ document.addEventListener('click', function(event) {
     }
 }, true);
 
-// Listen for Enter key presses anywhere
-document.addEventListener('keydown', function(event) {
-    if (event.key === 'Enter') {
-        setTimeout(() => {
-            createTOC();
-        }, 80); // Delay to allow DOM update
-    }
-}, true);
 // Listen for Enter key presses anywhere
 document.addEventListener('keydown', function(event) {
     if (event.key === 'Enter') {
