@@ -19,9 +19,29 @@ function createTOC() {
 
     const tocContainer = document.createElement('div');
     tocContainer.id = 'chatgpt-toc-extension';
+    
+    const tocHeader = document.createElement('div');
+    tocHeader.className = 'toc-header';
+    tocHeader.innerHTML = `
+        <h2>Table of Contents</h2>
+        <button id="toc-toggle-btn" title="Toggle Table of Contents"></button>
+    `;
+
     const tocList = document.createElement('ul');
-    tocContainer.innerHTML = '<h2>Table of Contents</h2>';
+    
+    tocContainer.appendChild(tocHeader);
     tocContainer.appendChild(tocList);
+
+    // --- Add Toggle Button Functionality ---
+    const toggleBtn = tocContainer.querySelector('#toc-toggle-btn');
+    toggleBtn.addEventListener('click', () => {
+        tocContainer.classList.toggle('collapsed');
+    });
+
+    // --- Default to collapsed on smaller screens ---
+    if (window.innerWidth <= 1024) {
+        tocContainer.classList.add('collapsed');
+    }
 
     questions.forEach((questionText, index) => {
         const shortText = questionText.length > 70 ? questionText.substring(0, 67) + '...' : questionText;
