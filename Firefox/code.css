@@ -21,14 +21,6 @@
     flex-direction: column;
 }
 
-/* --- Add Toggle Header Styles --- */
-#chatgpt-toc-extension .toc-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    /* The h2 already has a bottom border, which works well here */
-}
-
 #chatgpt-toc-extension h2 {
     margin-top: 0;
     margin-bottom: 14px;
@@ -39,162 +31,6 @@
     padding-bottom: 8px;
     background: transparent;
     letter-spacing: 0.01em;
-}
-
-/* --- Toggle Button Styles --- */
-#toc-toggle-btn {
-    background: linear-gradient(145deg, #2a2d36, #1e2028);
-    border: 1px solid #3a3d46;
-    color: #e8e8e8;
-    border-radius: 8px;
-    width: 28px;
-    height: 28px;
-    font-size: 16px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    flex-shrink: 0;
-    padding: 0;
-    position: relative;
-    box-shadow: 
-        0 2px 8px rgba(0, 0, 0, 0.3),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-}
-
-#toc-toggle-btn:hover {
-    background: linear-gradient(145deg, #3a3d46, #2e3138);
-    border-color: #4a4d56;
-    color: #ffffff;
-    transform: translateY(-1px);
-    box-shadow: 
-        0 4px 12px rgba(0, 0, 0, 0.4),
-        inset 0 1px 0 rgba(255, 255, 255, 0.15),
-        0 0 0 1px rgba(255, 255, 255, 0.1);
-}
-
-#toc-toggle-btn:active {
-    transform: translateY(0);
-    box-shadow: 
-        0 1px 4px rgba(0, 0, 0, 0.4),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1);
-}
-
-/* The icon for the button */
-#toc-toggle-btn::before {
-    content: '-';
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    font-size: 26px;      /* Increased size */
-    font-weight: 500;     /* Thicker */
-    line-height: 1;
-    transition: all 0.2s ease;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-    color: #40b8cd; /* Match TOC text color */
-}
-
-#toc-toggle-btn::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    background: radial-gradient(circle, rgba(255, 255, 255, 0.2) 0%, transparent 70%);
-    border-radius: 50%;
-    transform: translate(-50%, -50%);
-    transition: all 0.3s ease;
-    pointer-events: none;
-}
-
-#toc-toggle-btn:hover::after {
-    width: 40px;
-    height: 40px;
-}
-
-/* --- Collapsed State Styles --- */
-#chatgpt-toc-extension.collapsed {
-    /* Make it a perfect container for the button */
-    width: 48px;  /* Slightly larger for the new button */
-    height: 48px;
-    padding: 10px;
-    min-width: 0;
-    background-color: #181a2099;
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-#chatgpt-toc-extension.collapsed h2 {
-    display: none; /* Hide the "Table of Contents" text */
-}
-
-#chatgpt-toc-extension.collapsed ul {
-    display: none; /* Hide the list completely */
-}
-
-/* Change the button icon to a plus sign when collapsed */
-#chatgpt-toc-extension.collapsed #toc-toggle-btn::before {
-    content: '+';
-    font-size: 28px;      /* Increased size */
-    font-weight: 500;     /* Thicker */
-    color: #40b8cd; /* Match TOC text color */
-}
-
-/* Remove rotation animation for the button */
-#chatgpt-toc-extension.collapsed #toc-toggle-btn {
-    background: linear-gradient(145deg, #2e3138, #22252d);
-}
-
-#chatgpt-toc-extension.collapsed #toc-toggle-btn:hover {
-    background: linear-gradient(145deg, #3a3d46, #2e3138);
-    border-color: #4a4d56;
-    color: #ffffff;
-    transform: translateY(-1px);
-    box-shadow: 
-        0 4px 12px rgba(0, 0, 0, 0.4),
-        inset 0 1px 0 rgba(255, 255, 255, 0.15),
-        0 0 0 1px rgba(255, 255, 255, 0.1);
-}
-
-/* --- Responsive Design Adjustments --- */
-/* For smaller desktop and tablet screens */
-@media (max-width: 1200px) {
-    #chatgpt-toc-extension {
-        /* Make it a bit smaller and move it closer to the edge */
-        min-width: 220px;
-        max-width: 280px;
-        right: 20px;
-        top: 70px; /* Give a bit more space from the top */
-        font-size: 14px;
-    }
-    #chatgpt-toc-extension h2 {
-        font-size: 16px;
-    }
-    #chatgpt-toc-extension ul {
-        max-height: 60vh; /* Allow it to be a bit taller on smaller screens */
-    }
-}
-
-/* For very narrow desktop or large tablet screens */
-@media (max-width: 900px) {
-    #chatgpt-toc-extension {
-        /* Significantly reduce size and simplify */
-        min-width: 180px;
-        max-width: 220px;
-        padding: 12px;
-        font-size: 13px;
-    }
-    #chatgpt-toc-extension h2 {
-        margin-bottom: 8px;
-        font-size: 15px;
-    }
-    #chatgpt-toc-extension li a {
-        padding: 8px 10px;
-    }
 }
 
 #chatgpt-toc-extension ul {
@@ -268,4 +104,129 @@
     color: #40b8cd;
     font-weight: 700;
     text-shadow: 0 1px 2px #0002;
+}
+
+/* --- Collapsible TOC Styles --- */
+#chatgpt-toc-extension .toc-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    /* The h2 already has a bottom border, which works well here */
+}
+
+#toc-toggle-btn {
+    background: linear-gradient(145deg, #2a2d36, #1e2028);
+    border: 1px solid #3a3d46;
+    color: #e8e8e8;
+    border-radius: 8px;
+    width: 28px;
+    height: 28px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    flex-shrink: 0;
+    padding: 0;
+    position: relative;
+    box-shadow: 
+        0 2px 8px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+#toc-toggle-btn:hover {
+    background: linear-gradient(145deg, #3a3d46, #2e3138);
+    border-color: #4a4d56;
+    color: #ffffff;
+    transform: translateY(-1px);
+    box-shadow: 
+        0 4px 12px rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.15),
+        0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+#toc-toggle-btn:active {
+    transform: translateY(0);
+    box-shadow: 
+        0 1px 4px rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* The icon for the button */
+#toc-toggle-btn::before {
+    content: '-';
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 26px;      /* Increased size */
+    font-weight: 500;     /* Thicker */
+    line-height: 1;
+    transition: all 0.2s ease;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    color: #40b8cd; /* Match TOC text color */
+}
+
+#toc-toggle-btn::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.2) 0%, transparent 70%);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: all 0.3s ease;
+    pointer-events: none;
+}
+
+#toc-toggle-btn:hover::after {
+    width: 40px;
+    height: 40px;
+}
+
+#chatgpt-toc-extension.collapsed {
+    /* Make it a perfect container for the button */
+    width: 48px;  /* Slightly larger for the new button */
+    height: 48px;
+    padding: 10px;
+    min-width: 0;
+    background-color: #181a2099;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#chatgpt-toc-extension.collapsed h2 {
+    display: none; /* Hide the "Table of Contents" text */
+}
+
+#chatgpt-toc-extension.collapsed ul {
+    display: none; /* Hide the list completely */
+}
+
+/* Change the button icon to a plus sign when collapsed */
+#chatgpt-toc-extension.collapsed #toc-toggle-btn::before {
+    content: '+';
+    font-size: 28px;      /* Increased size */
+    font-weight: 500;     /* Thicker */
+    color: #40b8cd; /* Match TOC text color */
+}
+
+/* Remove rotation animation for the button */
+#chatgpt-toc-extension.collapsed #toc-toggle-btn {
+    background: linear-gradient(145deg, #2e3138, #22252d);
+}
+
+#chatgpt-toc-extension.collapsed #toc-toggle-btn:hover {
+    background: linear-gradient(145deg, #3a3d46, #2e3138);
+    border-color: #4a4d56;
+    color: #ffffff;
+    transform: translateY(-1px);
+    box-shadow: 
+        0 4px 12px rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.15),
+        0 0 0 1px rgba(255, 255, 255, 0.1);
 }

@@ -32,6 +32,19 @@ function createTOC() {
     tocContainer.appendChild(tocHeader);
     tocContainer.appendChild(tocList);
 
+    // --- Add Toggle Button Functionality ---
+    const toggleBtn = tocContainer.querySelector('#toc-toggle-btn');
+    if (toggleBtn) {
+        toggleBtn.addEventListener('click', () => {
+            tocContainer.classList.toggle('collapsed');
+        });
+    }
+
+    // --- Default to collapsed on smaller screens ---
+    if (window.innerWidth <= 1024) {
+        tocContainer.classList.add('collapsed');
+    }
+
     questions.forEach((questionText, index) => {
         const shortText = questionText.length > 70 ? questionText.substring(0, 67) + '...' : questionText;
         const questionId = `toc-question-${index}`;
@@ -64,19 +77,6 @@ function createTOC() {
     if (tocList.children.length > 0) {
         // Always append to body, let CSS handle positioning and scrolling
         document.body.appendChild(tocContainer);
-        
-        // Add toggle functionality after the container is in the DOM
-        const toggleBtn = tocContainer.querySelector('#toc-toggle-btn');
-        if (toggleBtn) {
-            toggleBtn.addEventListener('click', () => {
-                tocContainer.classList.toggle('collapsed');
-            });
-        }
-
-        // Default to collapsed on smaller screens
-        if (window.innerWidth <= 1024) {
-            tocContainer.classList.add('collapsed');
-        }
     } else {
         console.log("TOC list is empty, not appending.");
     }
@@ -139,16 +139,20 @@ new MutationObserver(() => {
 // Also check for URL changes on popstate (back/forward button)
 window.addEventListener('popstate', checkForChatChange);
 
-// Listen for mouse clicks on any button
+// Listen for mouse clicks on the prompt submission button
 document.addEventListener('click', function(event) {
-    if (event.target.tagName === 'BUTTON') {
-        createTOC();
+    // Use .closest() to check if the click was on or inside the submit button.
+    // The data-testid for the send button is "send-button".
+    if (event.target.closest('[data-testid="send-button"]')) {
+        // Delay to allow the new prompt to appear in the DOM
+        setTimeout(() => createTOC(), 100);
     }
 }, true);
 
-// Listen for Enter key presses anywhere
+// Listen for Enter key presses in the prompt textarea
 document.addEventListener('keydown', function(event) {
-    if (event.key === 'Enter') {
+    // Check if the key is Enter and if the active element is the prompt textarea.
+    if (event.key === 'Enter' && document.activeElement.id === 'prompt-textarea') {
         setTimeout(() => {
             createTOC();
         }, 80); // Delay to allow DOM update
