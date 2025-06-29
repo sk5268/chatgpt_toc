@@ -32,17 +32,6 @@ function createTOC() {
     tocContainer.appendChild(tocHeader);
     tocContainer.appendChild(tocList);
 
-    // --- Add Toggle Button Functionality ---
-    const toggleBtn = tocContainer.querySelector('#toc-toggle-btn');
-    toggleBtn.addEventListener('click', () => {
-        tocContainer.classList.toggle('collapsed');
-    });
-
-    // --- Default to collapsed on smaller screens ---
-    if (window.innerWidth <= 1024) {
-        tocContainer.classList.add('collapsed');
-    }
-
     questions.forEach((questionText, index) => {
         const shortText = questionText.length > 70 ? questionText.substring(0, 67) + '...' : questionText;
         const questionId = `toc-question-${index}`;
@@ -75,6 +64,19 @@ function createTOC() {
     if (tocList.children.length > 0) {
         // Always append to body, let CSS handle positioning and scrolling
         document.body.appendChild(tocContainer);
+        
+        // Add toggle functionality after the container is in the DOM
+        const toggleBtn = tocContainer.querySelector('#toc-toggle-btn');
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', () => {
+                tocContainer.classList.toggle('collapsed');
+            });
+        }
+
+        // Default to collapsed on smaller screens
+        if (window.innerWidth <= 1024) {
+            tocContainer.classList.add('collapsed');
+        }
     } else {
         console.log("TOC list is empty, not appending.");
     }
