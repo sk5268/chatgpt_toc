@@ -28,7 +28,7 @@
 
 ## 🛠️ Installation
 
-[Install for Firefox](https://addons.mozilla.org/en-US/firefox/addon/chatgpt-toc/)
+[Install for Firefox](https://addons.mozilla.org/en-US/firefox/addon/chatgpt-toc/) <br>
 [Install for Chrome](https://chromewebstore.google.com/detail/egkiiifpaljjnbjkdblfiddmeaihnajd?utm_source=item-share-cb)
 
 ---
