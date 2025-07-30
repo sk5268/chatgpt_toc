@@ -249,23 +249,46 @@ class DOMManager {
   static createHeader() {
     const header = document.createElement("div");
     header.className = CONSTANTS.CLASSES.TOC_HEADER;
-    header.innerHTML = `
-      <div class="${CONSTANTS.CLASSES.TOC_HEADER_CONTENT}">
-        <div class="${CONSTANTS.CLASSES.TOC_DRAG_HANDLE}" title="Drag to move"></div>
-        <h2>Table of Contents</h2>
-      </div>
-      <button id="${CONSTANTS.IDS.TOC_TOGGLE_BTN}" title="Toggle Table of Contents"></button>
-    `;
+
+    const headerContent = document.createElement("div");
+    headerContent.className = CONSTANTS.CLASSES.TOC_HEADER_CONTENT;
+
+    const dragHandle = document.createElement("div");
+    dragHandle.className = CONSTANTS.CLASSES.TOC_DRAG_HANDLE;
+    dragHandle.title = "Drag to move";
+
+    const title = document.createElement("h2");
+    title.textContent = "Table of Contents";
+
+    const toggleBtn = document.createElement("button");
+    toggleBtn.id = CONSTANTS.IDS.TOC_TOGGLE_BTN;
+    toggleBtn.title = "Toggle Table of Contents";
+
+    headerContent.appendChild(dragHandle);
+    headerContent.appendChild(title);
+    header.appendChild(headerContent);
+    header.appendChild(toggleBtn);
+
     return header;
   }
 
   static createSearchContainer() {
     const container = document.createElement("div");
     container.className = CONSTANTS.CLASSES.TOC_SEARCH_CONTAINER;
-    container.innerHTML = `
-      <input type="text" id="${CONSTANTS.IDS.SEARCH_INPUT}" placeholder="Search queries..." />
-      <div id="${CONSTANTS.IDS.SEARCH_CLEAR}" title="Clear search">×</div>
-    `;
+
+    const searchInput = document.createElement("input");
+    searchInput.type = "text";
+    searchInput.id = CONSTANTS.IDS.SEARCH_INPUT;
+    searchInput.placeholder = "Search queries...";
+
+    const searchClear = document.createElement("div");
+    searchClear.id = CONSTANTS.IDS.SEARCH_CLEAR;
+    searchClear.title = "Clear search";
+    searchClear.textContent = "×";
+
+    container.appendChild(searchInput);
+    container.appendChild(searchClear);
+
     return container;
   }
 
