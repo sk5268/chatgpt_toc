@@ -15,12 +15,15 @@
     color: #fff;
     min-width: 240px;
     max-width: 340px;
-    margin-top: 0 !important;
-    margin-left: 0 !important;
+    margin: 0 !important;
     max-height: 70vh; /* Limit height of TOC */
     overflow: visible; /* Don't scroll the container itself */
     display: flex;
     flex-direction: column;
+    transition:
+        opacity 0.2s ease,
+        box-shadow 0.2s ease;
+    transform: translate3d(0, 0, 0); /* Enable hardware acceleration */
 }
 
 #chatgpt-toc-extension h2 {
@@ -29,10 +32,14 @@
     font-size: 17px;
     font-weight: 700;
     color: #40b8cd;
-    border-bottom: 1px solid #40b8cd33;
-    padding-bottom: 8px;
     background: transparent;
     letter-spacing: 0.01em;
+}
+
+#chatgpt-toc-extension .toc-header {
+    border-bottom: 1px solid #40b8cd33;
+    padding-bottom: 8px;
+    margin-bottom: 14px;
 }
 
 /* Search Container Styles */
@@ -192,6 +199,41 @@
     justify-content: space-between;
     align-items: center;
     /* The h2 already has a bottom border, which works well here */
+    cursor: move;
+    user-select: none;
+    position: relative;
+}
+
+.toc-header-content {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    height: 32px; /* Ensure a consistent height */
+}
+
+.toc-drag-handle {
+    width: 28px;
+    height: 32px; /* Match header content height */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='%2340b8cd'%3E%3Ccircle cx='3' cy='3' r='1'/%3E%3Ccircle cx='9' cy='3' r='1'/%3E%3Ccircle cx='3' cy='6' r='1'/%3E%3Ccircle cx='9' cy='6' r='1'/%3E%3Ccircle cx='3' cy='9' r='1'/%3E%3Ccircle cx='9' cy='9' r='1'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 16px 16px;
+    opacity: 0.6;
+    cursor: move;
+    user-select: none;
+    transition: opacity 0.2s ease;
+    transform: translateY(-6px);
+    flex-shrink: 0; /* Prevent from shrinking */
+    margin-right: 4px;
+}
+
+.toc-header-content h2 {
+    margin: 0;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    height: 32px; /* Match drag handle height */
 }
 
 #toc-toggle-btn {
@@ -328,13 +370,30 @@
     /* Make it a perfect container for the button */
     width: 48px; /* Slightly larger for the new button */
     height: 48px;
-    padding: 10px;
+    padding: 0;
     min-width: 0;
+    max-width: none;
     background-color: #181a2099;
     overflow: hidden;
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+#chatgpt-toc-extension.collapsed .toc-header {
+    cursor: move;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#chatgpt-toc-extension.collapsed .toc-header-content {
+    display: none;
 }
 
 #chatgpt-toc-extension.collapsed h2 {
@@ -350,6 +409,11 @@
 }
 
 /* Change the button icon to a plus sign when collapsed */
+#chatgpt-toc-extension.collapsed #toc-toggle-btn {
+    width: 48px;
+    height: 48px;
+}
+
 #chatgpt-toc-extension.collapsed #toc-toggle-btn::before {
     content: "+";
     font-size: 28px; /* Increased size */
@@ -358,10 +422,6 @@
 }
 
 /* Remove rotation animation for the button */
-#chatgpt-toc-extension.collapsed #toc-toggle-btn {
-    background: linear-gradient(145deg, #2e3138, #22252d);
-}
-
 #chatgpt-toc-extension.collapsed #toc-toggle-btn:hover {
     background: linear-gradient(145deg, #3a3d46, #2e3138);
     border-color: #4a4d56;

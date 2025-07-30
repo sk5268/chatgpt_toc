@@ -1,3 +1,113 @@
+// Position storage functions
+function savePosition(x, y) {
+  localStorage.setItem("chatgpt-toc-position", JSON.stringify({ x, y }));
+}
+
+function getSavedPosition() {
+  const saved = localStorage.getItem("chatgpt-toc-position");
+  return saved ? JSON.parse(saved) : null;
+}
+
+// Drag functionality
+function makeDraggable(element) {
+  let isDragging = false;
+  let startMouseX, startMouseY;
+  let startElementX, startElementY;
+
+  const header = element.querySelector(".toc-header");
+  if (!header) return;
+
+  header.style.cursor = "move";
+  header.style.userSelect = "none";
+
+  header.addEventListener("mousedown", startDrag);
+
+  function startDrag(e) {
+    if (e.target.closest("#toc-toggle-btn")) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    isDragging = true;
+
+    // Record starting mouse position
+    startMouseX = e.clientX;
+    startMouseY = e.clientY;
+
+    // Record starting element position
+    const rect = element.getBoundingClientRect();
+    startElementX = rect.left;
+    startElementY = rect.top;
+
+    // Ensure fixed positioning with !important
+    element.style.setProperty("position", "fixed", "important");
+    element.style.setProperty("left", startElementX + "px", "important");
+    element.style.setProperty("top", startElementY + "px", "important");
+    element.style.setProperty("right", "auto", "important");
+    element.style.setProperty("bottom", "auto", "important");
+    element.style.setProperty("margin", "0", "important");
+
+    // Visual feedback
+    element.style.opacity = "0.8";
+    element.style.transition = "none";
+    element.style.zIndex = "10001";
+
+    // Add global event listeners
+    document.addEventListener("mousemove", drag);
+    document.addEventListener("mouseup", stopDrag);
+    document.body.style.userSelect = "none";
+  }
+
+  function drag(e) {
+    if (!isDragging) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    // Calculate how far the mouse has moved
+    const deltaX = e.clientX - startMouseX;
+    const deltaY = e.clientY - startMouseY;
+
+    // Calculate new position
+    let newX = startElementX + deltaX;
+    let newY = startElementY + deltaY;
+
+    // Constrain to viewport
+    const padding = 10;
+    const minX = padding;
+    const minY = padding;
+    const maxX = window.innerWidth - element.offsetWidth - padding;
+    const maxY = window.innerHeight - element.offsetHeight - padding;
+
+    newX = Math.max(minX, Math.min(newX, maxX));
+    newY = Math.max(minY, Math.min(newY, maxY));
+
+    // Apply position with !important
+    element.style.setProperty("left", newX + "px", "important");
+    element.style.setProperty("top", newY + "px", "important");
+  }
+
+  function stopDrag() {
+    if (!isDragging) return;
+
+    isDragging = false;
+
+    // Save position
+    const rect = element.getBoundingClientRect();
+    savePosition(rect.left, rect.top);
+
+    // Reset visual feedback
+    element.style.opacity = "";
+    element.style.transition = "";
+    element.style.zIndex = "10000";
+
+    // Remove event listeners
+    document.removeEventListener("mousemove", drag);
+    document.removeEventListener("mouseup", stopDrag);
+    document.body.style.userSelect = "";
+  }
+}
+
 function extractAllQueries() {
   // ChatGPT user messages typically have role="user" or a specific class
   // As of 2024, user messages are in div[data-message-author-role="user"]
@@ -25,7 +135,10 @@ function createTOC() {
   const tocHeader = document.createElement("div");
   tocHeader.className = "toc-header";
   tocHeader.innerHTML = `
-        <h2>Table of Contents</h2>
+        <div class="toc-header-content">
+            <div class="toc-drag-handle" title="Drag to move"></div>
+            <h2>Table of Contents</h2>
+        </div>
         <button id="toc-toggle-btn" title="Toggle Table of Contents"></button>
     `;
 
@@ -79,6 +192,19 @@ function createTOC() {
     searchClear.style.display = searchInput.value ? "flex" : "none";
   });
 
+  // --- Apply saved position or default position ---
+  const savedPosition = getSavedPosition();
+  if (savedPosition) {
+    // Use saved position and ensure proper fixed positioning with !important
+    tocContainer.style.setProperty("position", "fixed", "important");
+    tocContainer.style.setProperty("left", savedPosition.x + "px", "important");
+    tocContainer.style.setProperty("top", savedPosition.y + "px", "important");
+    tocContainer.style.setProperty("right", "auto", "important");
+    tocContainer.style.setProperty("bottom", "auto", "important");
+    tocContainer.style.setProperty("margin", "0", "important");
+    tocContainer.style.setProperty("transform", "none", "important");
+  }
+
   // --- Default to collapsed on smaller screens ---
   if (window.innerWidth <= 1024) {
     tocContainer.classList.add("collapsed");
@@ -124,6 +250,9 @@ function createTOC() {
   if (tocList.children.length > 0) {
     // Always append to body, let CSS handle positioning and scrolling
     document.body.appendChild(tocContainer);
+
+    // Make the TOC draggable
+    makeDraggable(tocContainer);
   } else {
     console.log("TOC list is empty, not appending.");
   }
@@ -189,6 +318,47 @@ new MutationObserver(() => {
 
 // Also check for URL changes on popstate (back/forward button)
 window.addEventListener("popstate", checkForChatChange);
+
+// Handle window resize to keep TOC within bounds
+window.addEventListener("resize", () => {
+  const tocContainer = document.getElementById("chatgpt-toc-extension");
+  if (tocContainer) {
+    const rect = tocContainer.getBoundingClientRect();
+    const padding = 10;
+    const maxX = window.innerWidth - tocContainer.offsetWidth - padding;
+    const maxY = window.innerHeight - tocContainer.offsetHeight - padding;
+
+    let needsUpdate = false;
+    let newX = rect.left;
+    let newY = rect.top;
+
+    if (rect.left > maxX) {
+      newX = maxX;
+      needsUpdate = true;
+    }
+    if (rect.top > maxY) {
+      newY = maxY;
+      needsUpdate = true;
+    }
+    if (rect.left < padding) {
+      newX = padding;
+      needsUpdate = true;
+    }
+    if (rect.top < padding) {
+      newY = padding;
+      needsUpdate = true;
+    }
+
+    if (needsUpdate) {
+      tocContainer.style.setProperty("position", "fixed", "important");
+      tocContainer.style.setProperty("left", newX + "px", "important");
+      tocContainer.style.setProperty("top", newY + "px", "important");
+      tocContainer.style.setProperty("right", "auto", "important");
+      tocContainer.style.setProperty("bottom", "auto", "important");
+      savePosition(newX, newY);
+    }
+  }
+});
 
 // Listen for mouse clicks on the prompt submission button
 document.addEventListener(
