@@ -1,232 +1,291 @@
-// Position storage functions
-function savePosition(x, y) {
-  localStorage.setItem("chatgpt-toc-position", JSON.stringify({ x, y }));
-}
+const CONSTANTS = {
+  SELECTORS: {
+    USER_MESSAGE: 'div[data-message-author-role="user"]',
+    SEND_BUTTON: '[data-testid="send-button"]',
+    PROMPT_TEXTAREA: "#prompt-textarea",
+  },
+  IDS: {
+    TOC_CONTAINER: "chatgpt-toc-extension",
+    TOC_TOGGLE_BTN: "toc-toggle-btn",
+    SEARCH_INPUT: "toc-search-input",
+    SEARCH_CLEAR: "toc-search-clear",
+  },
+  CLASSES: {
+    TOC_HEADER: "toc-header",
+    TOC_HEADER_CONTENT: "toc-header-content",
+    TOC_DRAG_HANDLE: "toc-drag-handle",
+    TOC_SEARCH_CONTAINER: "toc-search-container",
+    COLLAPSED: "collapsed",
+  },
+  DELAYS: {
+    PAGE_LOAD: 3000,
+    CHAT_CHANGE: 1000,
+    PROMPT_SUBMISSION: 100,
+    ENTER_KEY: 80,
+  },
+  CONSTRAINTS: {
+    PADDING: 10,
+    MAX_QUERY_LENGTH: 70,
+    TRUNCATE_SUFFIX: "...",
+    COLLAPSE_BREAKPOINT: 1024,
+  },
+  STORAGE_KEY: "chatgpt-toc-position",
+};
 
-function getSavedPosition() {
-  const saved = localStorage.getItem("chatgpt-toc-position");
-  return saved ? JSON.parse(saved) : null;
-}
-
-// Drag functionality
-function makeDraggable(element) {
-  let isDragging = false;
-  let startMouseX, startMouseY;
-  let startElementX, startElementY;
-
-  const header = element.querySelector(".toc-header");
-  if (!header) return;
-
-  header.style.cursor = "move";
-  header.style.userSelect = "none";
-
-  header.addEventListener("mousedown", startDrag);
-
-  function startDrag(e) {
-    if (e.target.closest("#toc-toggle-btn")) return;
-
-    e.preventDefault();
-    e.stopPropagation();
-
-    isDragging = true;
-
-    // Record starting mouse position
-    startMouseX = e.clientX;
-    startMouseY = e.clientY;
-
-    // Record starting element position
-    const rect = element.getBoundingClientRect();
-    startElementX = rect.left;
-    startElementY = rect.top;
-
-    // Ensure fixed positioning with !important
-    element.style.setProperty("position", "fixed", "important");
-    element.style.setProperty("left", startElementX + "px", "important");
-    element.style.setProperty("top", startElementY + "px", "important");
-    element.style.setProperty("right", "auto", "important");
-    element.style.setProperty("bottom", "auto", "important");
-    element.style.setProperty("margin", "0", "important");
-
-    // Visual feedback
-    element.style.opacity = "0.8";
-    element.style.transition = "none";
-    element.style.zIndex = "10001";
-
-    // Add global event listeners
-    document.addEventListener("mousemove", drag);
-    document.addEventListener("mouseup", stopDrag);
-    document.body.style.userSelect = "none";
+/**
+ * Manages TOC positioning and persistence
+ */
+class PositionManager {
+  static savePosition(x, y) {
+    localStorage.setItem(CONSTANTS.STORAGE_KEY, JSON.stringify({ x, y }));
   }
 
-  function drag(e) {
-    if (!isDragging) return;
-
-    e.preventDefault();
-    e.stopPropagation();
-
-    // Calculate how far the mouse has moved
-    const deltaX = e.clientX - startMouseX;
-    const deltaY = e.clientY - startMouseY;
-
-    // Calculate new position
-    let newX = startElementX + deltaX;
-    let newY = startElementY + deltaY;
-
-    // Constrain to viewport
-    const padding = 10;
-    const minX = padding;
-    const minY = padding;
-    const maxX = window.innerWidth - element.offsetWidth - padding;
-    const maxY = window.innerHeight - element.offsetHeight - padding;
-
-    newX = Math.max(minX, Math.min(newX, maxX));
-    newY = Math.max(minY, Math.min(newY, maxY));
-
-    // Apply position with !important
-    element.style.setProperty("left", newX + "px", "important");
-    element.style.setProperty("top", newY + "px", "important");
+  static getSavedPosition() {
+    const saved = localStorage.getItem(CONSTANTS.STORAGE_KEY);
+    return saved ? JSON.parse(saved) : null;
   }
 
-  function stopDrag() {
-    if (!isDragging) return;
+  static applyPosition(element, x, y) {
+    const styles = {
+      position: "fixed",
+      left: `${x}px`,
+      top: `${y}px`,
+      right: "auto",
+      bottom: "auto",
+      margin: "0",
+      transform: "none",
+    };
 
-    isDragging = false;
-
-    // Save position
-    const rect = element.getBoundingClientRect();
-    savePosition(rect.left, rect.top);
-
-    // Reset visual feedback
-    element.style.opacity = "";
-    element.style.transition = "";
-    element.style.zIndex = "10000";
-
-    // Remove event listeners
-    document.removeEventListener("mousemove", drag);
-    document.removeEventListener("mouseup", stopDrag);
-    document.body.style.userSelect = "";
-  }
-}
-
-function extractAllQueries() {
-  // ChatGPT user messages typically have role="user" or a specific class
-  // As of 2024, user messages are in div[data-message-author-role="user"]
-  const queryElements = document.querySelectorAll(
-    'div[data-message-author-role="user"]',
-  );
-  let queries = Array.from(queryElements)
-    .map((el) => el.textContent.trim())
-    .filter(Boolean);
-
-  return queries;
-}
-
-function createTOC() {
-  const existingTOC = document.getElementById("chatgpt-toc-extension");
-  if (existingTOC) {
-    existingTOC.remove();
-  }
-
-  let questions = extractAllQueries();
-
-  const tocContainer = document.createElement("div");
-  tocContainer.id = "chatgpt-toc-extension";
-
-  const tocHeader = document.createElement("div");
-  tocHeader.className = "toc-header";
-  tocHeader.innerHTML = `
-        <div class="toc-header-content">
-            <div class="toc-drag-handle" title="Drag to move"></div>
-            <h2>Table of Contents</h2>
-        </div>
-        <button id="toc-toggle-btn" title="Toggle Table of Contents"></button>
-    `;
-
-  const searchContainer = document.createElement("div");
-  searchContainer.className = "toc-search-container";
-  searchContainer.innerHTML = `
-        <input type="text" id="toc-search-input" placeholder="Search queries..." />
-        <div id="toc-search-clear" title="Clear search">×</div>
-    `;
-
-  const tocList = document.createElement("ul");
-
-  tocContainer.appendChild(tocHeader);
-  tocContainer.appendChild(searchContainer);
-  tocContainer.appendChild(tocList);
-
-  // --- Add Toggle Button Functionality ---
-  const toggleBtn = tocContainer.querySelector("#toc-toggle-btn");
-  if (toggleBtn) {
-    toggleBtn.addEventListener("click", () => {
-      tocContainer.classList.toggle("collapsed");
+    Object.entries(styles).forEach(([prop, value]) => {
+      element.style.setProperty(prop, value, "important");
     });
   }
 
-  // --- Add Search Functionality ---
-  const searchInput = tocContainer.querySelector("#toc-search-input");
-  const searchClear = tocContainer.querySelector("#toc-search-clear");
-  const allListItems = [];
+  static constrainToViewport(x, y, elementWidth, elementHeight) {
+    const padding = CONSTANTS.CONSTRAINTS.PADDING;
+    const minX = padding;
+    const minY = padding;
+    const maxX = window.innerWidth - elementWidth - padding;
+    const maxY = window.innerHeight - elementHeight - padding;
 
-  // Store reference to all list items for filtering
-  const updateSearchResults = () => {
-    const searchTerm = searchInput.value.toLowerCase().trim();
+    return {
+      x: Math.max(minX, Math.min(x, maxX)),
+      y: Math.max(minY, Math.min(y, maxY)),
+    };
+  }
+}
 
-    allListItems.forEach((item) => {
+/**
+ * Handles drag functionality for the TOC
+ */
+class DragManager {
+  constructor(element, positionManager) {
+    this.element = element;
+    this.positionManager = positionManager;
+    this.isDragging = false;
+    this.startMouseX = 0;
+    this.startMouseY = 0;
+    this.startElementX = 0;
+    this.startElementY = 0;
+
+    this.init();
+  }
+
+  init() {
+    const header = this.element.querySelector(
+      `.${CONSTANTS.CLASSES.TOC_HEADER}`,
+    );
+    if (!header) return;
+
+    header.style.cursor = "move";
+    header.style.userSelect = "none";
+    header.addEventListener("mousedown", this.startDrag.bind(this));
+  }
+
+  startDrag(e) {
+    if (e.target.closest(`#${CONSTANTS.IDS.TOC_TOGGLE_BTN}`)) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    this.isDragging = true;
+    this.startMouseX = e.clientX;
+    this.startMouseY = e.clientY;
+
+    const rect = this.element.getBoundingClientRect();
+    this.startElementX = rect.left;
+    this.startElementY = rect.top;
+
+    this.positionManager.applyPosition(
+      this.element,
+      this.startElementX,
+      this.startElementY,
+    );
+    this.applyDragStyles();
+
+    document.addEventListener("mousemove", this.drag.bind(this));
+    document.addEventListener("mouseup", this.stopDrag.bind(this));
+    document.body.style.userSelect = "none";
+  }
+
+  drag(e) {
+    if (!this.isDragging) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    const deltaX = e.clientX - this.startMouseX;
+    const deltaY = e.clientY - this.startMouseY;
+
+    let newX = this.startElementX + deltaX;
+    let newY = this.startElementY + deltaY;
+
+    const constrained = this.positionManager.constrainToViewport(
+      newX,
+      newY,
+      this.element.offsetWidth,
+      this.element.offsetHeight,
+    );
+
+    this.positionManager.applyPosition(
+      this.element,
+      constrained.x,
+      constrained.y,
+    );
+  }
+
+  stopDrag() {
+    if (!this.isDragging) return;
+
+    this.isDragging = false;
+
+    const rect = this.element.getBoundingClientRect();
+    this.positionManager.savePosition(rect.left, rect.top);
+
+    this.removeDragStyles();
+    document.removeEventListener("mousemove", this.drag);
+    document.removeEventListener("mouseup", this.stopDrag);
+    document.body.style.userSelect = "";
+  }
+
+  applyDragStyles() {
+    this.element.style.opacity = "0.8";
+    this.element.style.transition = "none";
+    this.element.style.zIndex = "10001";
+  }
+
+  removeDragStyles() {
+    this.element.style.opacity = "";
+    this.element.style.transition = "";
+    this.element.style.zIndex = "10000";
+  }
+}
+
+/**
+ * Manages search functionality
+ */
+class SearchManager {
+  constructor(searchInput, searchClear) {
+    this.searchInput = searchInput;
+    this.searchClear = searchClear;
+    this.allListItems = [];
+
+    this.init();
+  }
+
+  init() {
+    this.searchInput.addEventListener(
+      "input",
+      this.handleSearchInput.bind(this),
+    );
+    this.searchClear.addEventListener("click", this.clearSearch.bind(this));
+  }
+
+  addListItems(items) {
+    this.allListItems.push(...items);
+  }
+
+  handleSearchInput() {
+    this.updateSearchResults();
+    this.updateClearButtonVisibility();
+  }
+
+  updateSearchResults() {
+    const searchTerm = this.searchInput.value.toLowerCase().trim();
+
+    this.allListItems.forEach((item) => {
       const text = item.querySelector("a").textContent.toLowerCase();
       const shouldShow = searchTerm === "" || text.includes(searchTerm);
       item.style.display = shouldShow ? "block" : "none";
     });
-  };
-
-  searchInput.addEventListener("input", updateSearchResults);
-
-  searchClear.addEventListener("click", () => {
-    searchInput.value = "";
-    updateSearchResults();
-    searchInput.focus();
-  });
-
-  // Show/hide clear button based on input content
-  searchInput.addEventListener("input", () => {
-    searchClear.style.display = searchInput.value ? "flex" : "none";
-  });
-
-  // --- Apply saved position or default position ---
-  const savedPosition = getSavedPosition();
-  if (savedPosition) {
-    // Use saved position and ensure proper fixed positioning with !important
-    tocContainer.style.setProperty("position", "fixed", "important");
-    tocContainer.style.setProperty("left", savedPosition.x + "px", "important");
-    tocContainer.style.setProperty("top", savedPosition.y + "px", "important");
-    tocContainer.style.setProperty("right", "auto", "important");
-    tocContainer.style.setProperty("bottom", "auto", "important");
-    tocContainer.style.setProperty("margin", "0", "important");
-    tocContainer.style.setProperty("transform", "none", "important");
   }
 
-  // --- Default to collapsed on smaller screens ---
-  if (window.innerWidth <= 1024) {
-    tocContainer.classList.add("collapsed");
+  updateClearButtonVisibility() {
+    this.searchClear.style.display = this.searchInput.value ? "flex" : "none";
   }
 
-  questions.forEach((questionText, index) => {
+  clearSearch() {
+    this.searchInput.value = "";
+    this.updateSearchResults();
+    this.updateClearButtonVisibility();
+    this.searchInput.focus();
+  }
+
+  reset() {
+    this.allListItems = [];
+  }
+}
+
+/**
+ * Handles DOM manipulation for the TOC
+ */
+class DOMManager {
+  static createTOCContainer() {
+    const container = document.createElement("div");
+    container.id = CONSTANTS.IDS.TOC_CONTAINER;
+    return container;
+  }
+
+  static createHeader() {
+    const header = document.createElement("div");
+    header.className = CONSTANTS.CLASSES.TOC_HEADER;
+    header.innerHTML = `
+      <div class="${CONSTANTS.CLASSES.TOC_HEADER_CONTENT}">
+        <div class="${CONSTANTS.CLASSES.TOC_DRAG_HANDLE}" title="Drag to move"></div>
+        <h2>Table of Contents</h2>
+      </div>
+      <button id="${CONSTANTS.IDS.TOC_TOGGLE_BTN}" title="Toggle Table of Contents"></button>
+    `;
+    return header;
+  }
+
+  static createSearchContainer() {
+    const container = document.createElement("div");
+    container.className = CONSTANTS.CLASSES.TOC_SEARCH_CONTAINER;
+    container.innerHTML = `
+      <input type="text" id="${CONSTANTS.IDS.SEARCH_INPUT}" placeholder="Search queries..." />
+      <div id="${CONSTANTS.IDS.SEARCH_CLEAR}" title="Clear search">×</div>
+    `;
+    return container;
+  }
+
+  static createTOCList() {
+    return document.createElement("ul");
+  }
+
+  static createListItem(questionText, index) {
     const shortText =
-      questionText.length > 70
-        ? questionText.substring(0, 67) + "..."
+      questionText.length > CONSTANTS.CONSTRAINTS.MAX_QUERY_LENGTH
+        ? questionText.substring(
+            0,
+            CONSTANTS.CONSTRAINTS.MAX_QUERY_LENGTH - 3,
+          ) + CONSTANTS.CONSTRAINTS.TRUNCATE_SUFFIX
         : questionText;
+
     const questionId = `toc-question-${index}`;
-
-    // Assign id to the user message element for scrolling
-    let el = document.querySelectorAll('div[data-message-author-role="user"]')[
-      index
-    ];
-    if (el) {
-      el.id = questionId;
-    }
-
     const listItem = document.createElement("li");
     listItem.setAttribute("data-toc-num", index + 1);
+
     const link = document.createElement("a");
     link.href = `#${questionId}`;
     link.textContent = `${index + 1}. ${shortText}`;
@@ -234,159 +293,291 @@ function createTOC() {
 
     link.addEventListener("click", (e) => {
       e.preventDefault();
-      const targetElement = document.getElementById(questionId);
-      if (targetElement) {
-        targetElement.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
+      DOMManager.scrollToElement(questionId);
     });
 
     listItem.appendChild(link);
-    tocList.appendChild(listItem);
+    return { listItem, questionId };
+  }
 
-    // Store reference for search functionality
-    allListItems.push(listItem);
-  });
+  static scrollToElement(elementId) {
+    const targetElement = document.getElementById(elementId);
+    if (targetElement) {
+      targetElement.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }
 
-  if (tocList.children.length > 0) {
-    // Always append to body, let CSS handle positioning and scrolling
-    document.body.appendChild(tocContainer);
-
-    // Make the TOC draggable
-    makeDraggable(tocContainer);
-  } else {
-    console.log("TOC list is empty, not appending.");
+  static assignIdToUserMessage(index, questionId) {
+    const userMessages = document.querySelectorAll(
+      CONSTANTS.SELECTORS.USER_MESSAGE,
+    );
+    const element = userMessages[index];
+    if (element) {
+      element.id = questionId;
+    }
   }
 }
 
-// Optional: Chrome extension message listener for extracting queries
-if (
-  typeof chrome !== "undefined" &&
-  chrome.runtime &&
-  chrome.runtime.onMessage
-) {
-  chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    if (request.action === "getQueries") {
-      const queries = extractAllQueries();
-      sendResponse({ queries });
+/**
+ * Extracts user queries from the ChatGPT interface
+ */
+class QueryExtractor {
+  static extractAllQueries() {
+    const queryElements = document.querySelectorAll(
+      CONSTANTS.SELECTORS.USER_MESSAGE,
+    );
+    return Array.from(queryElements)
+      .map((el) => el.textContent.trim())
+      .filter(Boolean);
+  }
+}
+
+/**
+ * Handles URL monitoring and chat change detection
+ */
+class NavigationMonitor {
+  constructor(callback) {
+    this.callback = callback;
+    this.currentChatId = null;
+    this.lastUrl = location.href;
+
+    this.init();
+  }
+
+  init() {
+    this.currentChatId = this.getCurrentChatId();
+    this.setupMutationObserver();
+    window.addEventListener("popstate", this.checkForChatChange.bind(this));
+  }
+
+  getCurrentChatId() {
+    const url = window.location.href;
+    const match = url.match(/chatgpt\.com\/c\/([^/?#]+)/);
+    return match ? match[1] : null;
+  }
+
+  checkForChatChange() {
+    const newChatId = this.getCurrentChatId();
+    if (newChatId !== this.currentChatId) {
+      console.log(`Chat changed from ${this.currentChatId} to ${newChatId}`);
+      this.currentChatId = newChatId;
+      setTimeout(() => this.callback(), CONSTANTS.DELAYS.CHAT_CHANGE);
     }
-  });
+  }
+
+  setupMutationObserver() {
+    new MutationObserver(() => {
+      const url = location.href;
+      if (url !== this.lastUrl) {
+        this.lastUrl = url;
+        this.checkForChatChange();
+      }
+    }).observe(document, { subtree: true, childList: true });
+  }
 }
 
-// Track current chat ID
-let currentChatId = null;
+/**
+ * Main TOC Extension class
+ */
+class TOCExtension {
+  constructor() {
+    this.searchManager = null;
+    this.dragManager = null;
+    this.navigationMonitor = null;
 
-function getCurrentChatId() {
-  const url = window.location.href;
-  const match = url.match(/chatgpt\.com\/c\/([^/?#]+)/);
-  return match ? match[1] : null;
-}
+    this.init();
+  }
 
-function checkForChatChange() {
-  const newChatId = getCurrentChatId();
-  if (newChatId !== currentChatId) {
-    console.log(`Chat changed from ${currentChatId} to ${newChatId}`);
-    currentChatId = newChatId;
-    // Delay to allow new chat content to load
+  init() {
+    this.setupEventListeners();
+    this.navigationMonitor = new NavigationMonitor(this.createTOC.bind(this));
+    this.delayedCreateTOC();
+  }
+
+  setupEventListeners() {
+    window.addEventListener("load", this.delayedCreateTOC.bind(this));
+    window.addEventListener("pageshow", this.delayedCreateTOC.bind(this));
+    window.addEventListener("resize", this.handleWindowResize.bind(this));
+
+    document.addEventListener(
+      "click",
+      this.handleDocumentClick.bind(this),
+      true,
+    );
+    document.addEventListener("keydown", this.handleKeyDown.bind(this), true);
+
+    // Chrome extension message listener
+    this.setupChromeMessageListener();
+  }
+
+  setupChromeMessageListener() {
+    if (
+      typeof chrome !== "undefined" &&
+      chrome.runtime &&
+      chrome.runtime.onMessage
+    ) {
+      chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+        if (request.action === "getQueries") {
+          const queries = QueryExtractor.extractAllQueries();
+          sendResponse({ queries });
+        }
+      });
+    }
+  }
+
+  delayedCreateTOC() {
     setTimeout(() => {
-      createTOC();
-    }, 1000);
+      console.log("Calling createTOC after page load or navigation");
+      this.createTOC();
+    }, CONSTANTS.DELAYS.PAGE_LOAD);
   }
-}
 
-// Run createTOC 3 seconds after every page load (refresh, redirect, SPA navigation)
-function delayedCreateTOC() {
-  setTimeout(() => {
-    console.log("Calling createTOC 3 seconds after page load or navigation");
-    currentChatId = getCurrentChatId(); // Initialize current chat ID
-    createTOC();
-    console.log("Called createTOC");
-  }, 3000);
-}
+  createTOC() {
+    this.removePlasExistingTOC();
 
-window.addEventListener("load", delayedCreateTOC);
-window.addEventListener("pageshow", delayedCreateTOC);
+    const questions = QueryExtractor.extractAllQueries();
+    if (questions.length === 0) {
+      console.log("No questions found, not creating TOC");
+      return;
+    }
 
-// Monitor URL changes for SPA navigation
-let lastUrl = location.href;
-new MutationObserver(() => {
-  const url = location.href;
-  if (url !== lastUrl) {
-    lastUrl = url;
-    checkForChatChange();
+    const tocContainer = this.buildTOCStructure(questions);
+    this.setupTOCFunctionality(tocContainer);
+    this.applyInitialPosition(tocContainer);
+
+    document.body.appendChild(tocContainer);
+    console.log("TOC created successfully");
   }
-}).observe(document, { subtree: true, childList: true });
 
-// Also check for URL changes on popstate (back/forward button)
-window.addEventListener("popstate", checkForChatChange);
+  removePlasExistingTOC() {
+    const existingTOC = document.getElementById(CONSTANTS.IDS.TOC_CONTAINER);
+    if (existingTOC) {
+      existingTOC.remove();
+    }
+  }
 
-// Handle window resize to keep TOC within bounds
-window.addEventListener("resize", () => {
-  const tocContainer = document.getElementById("chatgpt-toc-extension");
-  if (tocContainer) {
+  buildTOCStructure(questions) {
+    const tocContainer = DOMManager.createTOCContainer();
+    const tocHeader = DOMManager.createHeader();
+    const searchContainer = DOMManager.createSearchContainer();
+    const tocList = DOMManager.createTOCList();
+
+    this.populateTOCList(tocList, questions);
+
+    tocContainer.appendChild(tocHeader);
+    tocContainer.appendChild(searchContainer);
+    tocContainer.appendChild(tocList);
+
+    return tocContainer;
+  }
+
+  populateTOCList(tocList, questions) {
+    const listItems = [];
+
+    questions.forEach((questionText, index) => {
+      const { listItem, questionId } = DOMManager.createListItem(
+        questionText,
+        index,
+      );
+      DOMManager.assignIdToUserMessage(index, questionId);
+
+      tocList.appendChild(listItem);
+      listItems.push(listItem);
+    });
+
+    return listItems;
+  }
+
+  setupTOCFunctionality(tocContainer) {
+    this.setupToggleButton(tocContainer);
+    this.setupSearchFunctionality(tocContainer);
+    this.setupDragFunctionality(tocContainer);
+    this.setupResponsiveCollapse(tocContainer);
+  }
+
+  setupToggleButton(tocContainer) {
+    const toggleBtn = tocContainer.querySelector(
+      `#${CONSTANTS.IDS.TOC_TOGGLE_BTN}`,
+    );
+    if (toggleBtn) {
+      toggleBtn.addEventListener("click", () => {
+        tocContainer.classList.toggle(CONSTANTS.CLASSES.COLLAPSED);
+      });
+    }
+  }
+
+  setupSearchFunctionality(tocContainer) {
+    const searchInput = tocContainer.querySelector(
+      `#${CONSTANTS.IDS.SEARCH_INPUT}`,
+    );
+    const searchClear = tocContainer.querySelector(
+      `#${CONSTANTS.IDS.SEARCH_CLEAR}`,
+    );
+    const listItems = Array.from(tocContainer.querySelectorAll("li"));
+
+    if (this.searchManager) {
+      this.searchManager.reset();
+    }
+
+    this.searchManager = new SearchManager(searchInput, searchClear);
+    this.searchManager.addListItems(listItems);
+  }
+
+  setupDragFunctionality(tocContainer) {
+    this.dragManager = new DragManager(tocContainer, PositionManager);
+  }
+
+  setupResponsiveCollapse(tocContainer) {
+    if (window.innerWidth <= CONSTANTS.CONSTRAINTS.COLLAPSE_BREAKPOINT) {
+      tocContainer.classList.add(CONSTANTS.CLASSES.COLLAPSED);
+    }
+  }
+
+  applyInitialPosition(tocContainer) {
+    const savedPosition = PositionManager.getSavedPosition();
+    if (savedPosition) {
+      PositionManager.applyPosition(
+        tocContainer,
+        savedPosition.x,
+        savedPosition.y,
+      );
+    }
+  }
+
+  handleWindowResize() {
+    const tocContainer = document.getElementById(CONSTANTS.IDS.TOC_CONTAINER);
+    if (!tocContainer) return;
+
     const rect = tocContainer.getBoundingClientRect();
-    const padding = 10;
-    const maxX = window.innerWidth - tocContainer.offsetWidth - padding;
-    const maxY = window.innerHeight - tocContainer.offsetHeight - padding;
+    const constrained = PositionManager.constrainToViewport(
+      rect.left,
+      rect.top,
+      tocContainer.offsetWidth,
+      tocContainer.offsetHeight,
+    );
 
-    let needsUpdate = false;
-    let newX = rect.left;
-    let newY = rect.top;
-
-    if (rect.left > maxX) {
-      newX = maxX;
-      needsUpdate = true;
-    }
-    if (rect.top > maxY) {
-      newY = maxY;
-      needsUpdate = true;
-    }
-    if (rect.left < padding) {
-      newX = padding;
-      needsUpdate = true;
-    }
-    if (rect.top < padding) {
-      newY = padding;
-      needsUpdate = true;
-    }
-
-    if (needsUpdate) {
-      tocContainer.style.setProperty("position", "fixed", "important");
-      tocContainer.style.setProperty("left", newX + "px", "important");
-      tocContainer.style.setProperty("top", newY + "px", "important");
-      tocContainer.style.setProperty("right", "auto", "important");
-      tocContainer.style.setProperty("bottom", "auto", "important");
-      savePosition(newX, newY);
+    if (constrained.x !== rect.left || constrained.y !== rect.top) {
+      PositionManager.applyPosition(tocContainer, constrained.x, constrained.y);
+      PositionManager.savePosition(constrained.x, constrained.y);
     }
   }
-});
 
-// Listen for mouse clicks on the prompt submission button
-document.addEventListener(
-  "click",
-  function (event) {
-    // Use .closest() to check if the click was on or inside the submit button.
-    // The data-testid for the send button is "send-button".
-    if (event.target.closest('[data-testid="send-button"]')) {
-      // Delay to allow the new prompt to appear in the DOM
-      setTimeout(() => createTOC(), 100);
+  handleDocumentClick(event) {
+    if (event.target.closest(CONSTANTS.SELECTORS.SEND_BUTTON)) {
+      setTimeout(() => this.createTOC(), CONSTANTS.DELAYS.PROMPT_SUBMISSION);
     }
-  },
-  true,
-);
+  }
 
-// Listen for Enter key presses in the prompt textarea
-document.addEventListener(
-  "keydown",
-  function (event) {
-    // Check if the key is Enter and if the active element is the prompt textarea.
+  handleKeyDown(event) {
     if (
       event.key === "Enter" &&
-      document.activeElement.id === "prompt-textarea"
+      document.activeElement.id ===
+        CONSTANTS.IDS.PROMPT_TEXTAREA.replace("#", "")
     ) {
-      setTimeout(() => {
-        createTOC();
-      }, 80); // Delay to allow DOM update
+      setTimeout(() => this.createTOC(), CONSTANTS.DELAYS.ENTER_KEY);
     }
-  },
-  true,
-);
+  }
+}
+
+// Initialize the extension when the script loads
+const tocExtension = new TOCExtension();

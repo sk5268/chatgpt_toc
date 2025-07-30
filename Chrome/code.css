@@ -1,204 +1,149 @@
+:root {
+    /* Colors */
+    --toc-bg-primary: #181a20e6;
+    --toc-bg-secondary: #23262f;
+    --toc-bg-tertiary: #3a3d46;
+    --toc-bg-quaternary: #4a4d56;
+    --toc-border-primary: #23262f;
+    --toc-border-secondary: #3a3d46;
+    --toc-accent-primary: #40b8cd;
+    --toc-accent-secondary: #3e5bff;
+    --toc-text-primary: #fff;
+    --toc-text-secondary: #e8e8e8;
+    --toc-text-muted: #888;
+    --toc-shadow-primary: #00000033;
+    --toc-shadow-secondary: #0002;
+    --toc-overlay: #181a2099;
+
+    /* Gradient Colors */
+    --toc-gradient-primary: linear-gradient(
+        180deg,
+        var(--toc-accent-primary) 0%,
+        var(--toc-accent-secondary) 100%
+    );
+    --toc-gradient-button: linear-gradient(145deg, #2a2d36, #1e2028);
+    --toc-gradient-button-hover: linear-gradient(
+        145deg,
+        var(--toc-bg-tertiary),
+        #2e3138
+    );
+    --toc-gradient-radial: radial-gradient(
+        circle,
+        var(--toc-accent-primary) 60%,
+        var(--toc-accent-secondary) 100%
+    );
+
+    /* Spacing */
+    --toc-spacing-xs: 4px;
+    --toc-spacing-sm: 8px;
+    --toc-spacing-md: 12px;
+    --toc-spacing-lg: 16px;
+    --toc-spacing-xl: 24px;
+
+    /* Sizing */
+    --toc-min-width: 240px;
+    --toc-max-width: 340px;
+    --toc-max-height: 70vh;
+    --toc-list-max-height: 40vh;
+    --toc-collapsed-size: 48px;
+    --toc-button-size: 28px;
+    --toc-button-size-large: 48px;
+
+    /* Typography */
+    --toc-font-size-sm: 13px;
+    --toc-font-size-md: 14px;
+    --toc-font-size-base: 15px;
+    --toc-font-size-lg: 16px;
+    --toc-font-size-xl: 17px;
+    --toc-font-size-xxl: 26px;
+    --toc-font-size-xxxl: 28px;
+    --toc-font-weight-normal: 600;
+    --toc-font-weight-bold: 700;
+    --toc-letter-spacing: 0.01em;
+
+    /* Borders and Radius */
+    --toc-border-radius-sm: 6px;
+    --toc-border-radius-md: 8px;
+    --toc-border-radius-lg: 12px;
+    --toc-border-radius-full: 50%;
+
+    /* Shadows */
+    --toc-shadow-main: 0 4px 24px 0 var(--toc-shadow-primary);
+    --toc-shadow-button:
+        0 2px 8px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    --toc-shadow-button-hover:
+        0 4px 12px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.15),
+        0 0 0 1px rgba(255, 255, 255, 0.1);
+    --toc-shadow-button-active:
+        0 1px 4px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+
+    /* Transitions */
+    --toc-transition-fast: 0.18s;
+    --toc-transition-medium: 0.2s;
+    --toc-transition-slow: 0.3s;
+    --toc-transition-easing: cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* Z-Index */
+    --toc-z-index-base: 10000;
+    --toc-z-index-elevated: 10001;
+
+    /* Font Stack */
+    --toc-font-family:
+        -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
+        sans-serif;
+}
+
+/* ===================================================================
+   Main Container
+   =================================================================== */
+
 #chatgpt-toc-extension {
     position: fixed !important;
     top: 60px !important;
     right: 40px !important;
-    background-color: #181a20e6;
-    border: 1px solid #23262f;
-    border-radius: 12px;
-    padding: 16px 14px 16px 14px;
-    z-index: 10000;
-    box-shadow: 0 4px 24px 0 #00000033;
-    font-family:
-        -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
-        sans-serif;
-    font-size: 15px;
-    color: #fff;
-    min-width: 240px;
-    max-width: 340px;
+    background-color: var(--toc-bg-primary);
+    border: 1px solid var(--toc-border-primary);
+    border-radius: var(--toc-border-radius-lg);
+    padding: var(--toc-spacing-lg) var(--toc-spacing-md);
+    z-index: var(--toc-z-index-base);
+    box-shadow: var(--toc-shadow-main);
+    font-family: var(--toc-font-family);
+    font-size: var(--toc-font-size-base);
+    color: var(--toc-text-primary);
+    min-width: var(--toc-min-width);
+    max-width: var(--toc-max-width);
     margin: 0 !important;
-    max-height: 70vh; /* Limit height of TOC */
-    overflow: visible; /* Don't scroll the container itself */
+    max-height: var(--toc-max-height);
+    overflow: visible;
     display: flex;
     flex-direction: column;
     transition:
-        opacity 0.2s ease,
-        box-shadow 0.2s ease;
-    transform: translate3d(0, 0, 0); /* Enable hardware acceleration */
+        opacity var(--toc-transition-medium) ease,
+        box-shadow var(--toc-transition-medium) ease;
+    transform: translate3d(0, 0, 0); /* Hardware acceleration */
 }
+
+/* ===================================================================
+   Header Section
+   =================================================================== */
 
 #chatgpt-toc-extension h2 {
     margin-top: 0;
-    margin-bottom: 14px;
-    font-size: 17px;
-    font-weight: 700;
-    color: #40b8cd;
+    margin-bottom: var(--toc-spacing-md);
+    font-size: var(--toc-font-size-xl);
+    font-weight: var(--toc-font-weight-bold);
+    color: var(--toc-accent-primary);
     background: transparent;
-    letter-spacing: 0.01em;
+    letter-spacing: var(--toc-letter-spacing);
 }
 
 #chatgpt-toc-extension .toc-header {
     border-bottom: 1px solid #40b8cd33;
-    padding-bottom: 8px;
-    margin-bottom: 14px;
-}
-
-/* Search Container Styles */
-.toc-search-container {
-    position: relative;
-    margin-bottom: 12px;
-    flex-shrink: 0; /* Prevent search from shrinking */
-}
-
-.toc-search-container::before {
-    content: "";
-    position: absolute;
-    left: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 16px;
-    height: 16px;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none'%3E%3Cpath d='M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z' fill='%2340b8cd'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: contain;
-    pointer-events: none;
-    z-index: 1;
-}
-
-#toc-search-input {
-    width: 100%;
-    padding: 8px 12px;
-    padding-left: 32px; /* Make room for magnifying glass icon */
-    padding-right: 32px; /* Make room for clear button */
-    background-color: #23262f;
-    border: 1px solid #3a3d46;
-    border-radius: 8px;
-    color: #fff;
-    font-size: 14px;
-    font-family: inherit;
-    outline: none;
-    transition: all 0.2s ease;
-    box-sizing: border-box;
-}
-
-#toc-search-input:focus {
-    border-color: #40b8cd;
-    box-shadow: 0 0 0 2px #40b8cd33;
-}
-
-#toc-search-input::placeholder {
-    color: #888;
-}
-
-#toc-search-clear {
-    position: absolute;
-    right: 8px;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 20px;
-    height: 20px;
-    background-color: #3a3d46;
-    border-radius: 50%;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    color: #888;
-    font-size: 14px;
-    font-weight: bold;
-    transition: all 0.2s ease;
-    user-select: none;
-}
-
-#toc-search-clear:hover {
-    background-color: #4a4d56;
-    color: #fff;
-}
-
-#chatgpt-toc-extension ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    position: relative;
-    padding-left: 32px; /* was 22px, increase to push content right */
-    overflow-y: auto; /* Enable vertical scrolling for the list */
-    max-height: 40vh; /* Reduced to account for search bar */
-    flex: 1; /* Allow list to grow and shrink */
-}
-
-#chatgpt-toc-extension ul::before {
-    display: none; /* Remove the fixed line */
-}
-
-#chatgpt-toc-extension li:nth-child(n + 1):not(:last-child)::after {
-    content: "";
-    position: absolute;
-    left: -20px; /* Move slightly left from -16px */
-    top: 27px; /* Start below current circle */
-    width: 4px;
-    height: calc(100% + 10px); /* Extend to next item */
-    background: linear-gradient(180deg, #40b8cd 0%, #3e5bff 100%);
-    border-radius: 2px;
-    box-shadow: 0 0 8px 2px #40b8cd66;
-    z-index: 0;
-}
-
-#chatgpt-toc-extension li {
-    position: relative;
-    min-height: 22px;
-}
-
-#chatgpt-toc-extension li::before {
-    content: ""; /* Remove numbers from circles */
-    position: absolute;
-    left: -25px; /* Move slightly left from -23px */
-    top: 13px;
-    width: 14px;
-    height: 14px;
-    background: radial-gradient(circle, #40b8cd 60%, #3e5bff 100%);
-    border-radius: 50%;
-    box-shadow:
-        0 0 6px 1.5px #40b8cd99,
-        0 0 0 2.5px #181a20e6;
-    color: #fff;
-    font-weight: bold;
-    font-size: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 2; /* Ensure circles stay above the line */
-    border: 1px solid #fff2;
-    pointer-events: none;
-}
-
-#chatgpt-toc-extension li a {
-    display: block;
-    padding: 10px 12px;
-    text-decoration: none;
-    color: #fff;
-    border-radius: 6px;
-    font-weight: 600;
-    transition:
-        background-color 0.18s,
-        color 0.18s;
-    word-break: break-word;
-    background: transparent;
-    letter-spacing: 0.01em;
-}
-
-#chatgpt-toc-extension li a:hover {
-    background-color: #40b8cd22;
-    color: #40b8cd;
-    font-weight: 700;
-    text-shadow: 0 1px 2px #0002;
-}
-
-/* --- Collapsible TOC Styles --- */
-#chatgpt-toc-extension .toc-header {
+    padding-bottom: var(--toc-spacing-sm);
+    margin-bottom: var(--toc-spacing-md);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    /* The h2 already has a bottom border, which works well here */
     cursor: move;
     user-select: none;
     position: relative;
@@ -207,25 +152,9 @@
 .toc-header-content {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--toc-spacing-sm);
     flex: 1;
-    height: 32px; /* Ensure a consistent height */
-}
-
-.toc-drag-handle {
-    width: 28px;
-    height: 32px; /* Match header content height */
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='%2340b8cd'%3E%3Ccircle cx='3' cy='3' r='1'/%3E%3Ccircle cx='9' cy='3' r='1'/%3E%3Ccircle cx='3' cy='6' r='1'/%3E%3Ccircle cx='9' cy='6' r='1'/%3E%3Ccircle cx='3' cy='9' r='1'/%3E%3Ccircle cx='9' cy='9' r='1'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: 16px 16px;
-    opacity: 0.6;
-    cursor: move;
-    user-select: none;
-    transition: opacity 0.2s ease;
-    transform: translateY(-6px);
-    flex-shrink: 0; /* Prevent from shrinking */
-    margin-right: 4px;
+    height: 32px;
 }
 
 .toc-header-content h2 {
@@ -233,26 +162,44 @@
     flex: 1;
     display: flex;
     align-items: center;
-    height: 32px; /* Match drag handle height */
+    height: 32px;
 }
 
+.toc-drag-handle {
+    width: var(--toc-button-size);
+    height: 32px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='%2340b8cd'%3E%3Ccircle cx='3' cy='3' r='1'/%3E%3Ccircle cx='9' cy='3' r='1'/%3E%3Ccircle cx='3' cy='6' r='1'/%3E%3Ccircle cx='9' cy='6' r='1'/%3E%3Ccircle cx='3' cy='9' r='1'/%3E%3Ccircle cx='9' cy='9' r='1'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: var(--toc-spacing-lg) var(--toc-spacing-lg);
+    opacity: 0.6;
+    cursor: move;
+    user-select: none;
+    transition: opacity var(--toc-transition-medium) ease;
+    transform: translateY(-6px);
+    flex-shrink: 0;
+    margin-right: var(--toc-spacing-xs);
+}
+
+/* ===================================================================
+   Toggle Button
+   =================================================================== */
+
 #toc-toggle-btn {
-    background: linear-gradient(145deg, #2a2d36, #1e2028);
-    border: 1px solid #3a3d46;
-    color: #e8e8e8;
-    border-radius: 8px;
-    width: 28px;
-    height: 28px;
-    font-size: 16px;
-    font-weight: 600;
+    background: var(--toc-gradient-button);
+    border: 1px solid var(--toc-border-secondary);
+    color: var(--toc-text-secondary);
+    border-radius: var(--toc-border-radius-md);
+    width: var(--toc-button-size);
+    height: var(--toc-button-size);
+    font-size: var(--toc-spacing-lg);
+    font-weight: var(--toc-font-weight-normal);
     cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all var(--toc-transition-slow) var(--toc-transition-easing);
     flex-shrink: 0;
     padding: 0;
     position: relative;
-    box-shadow:
-        0 2px 8px rgba(0, 0, 0, 0.3),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    box-shadow: var(--toc-shadow-button);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -260,87 +207,27 @@
 }
 
 #toc-toggle-btn:hover {
-    background: linear-gradient(145deg, #3a3d46, #2e3138);
-    border-color: #4a4d56;
-    color: #ffffff;
+    background: var(--toc-gradient-button-hover);
+    border-color: var(--toc-bg-quaternary);
+    color: var(--toc-text-primary);
     transform: translateY(-1px);
-    box-shadow:
-        0 4px 12px rgba(0, 0, 0, 0.4),
-        inset 0 1px 0 rgba(255, 255, 255, 0.15),
-        0 0 0 1px rgba(255, 255, 255, 0.1);
-}
-
-/* --- Responsive Design Adjustments --- */
-/* For smaller desktop and tablet screens */
-@media (max-width: 1200px) {
-    #chatgpt-toc-extension {
-        /* Make it a bit smaller and move it closer to the edge */
-        min-width: 220px;
-        max-width: 280px;
-        right: 20px;
-        top: 70px; /* Give a bit more space from the top */
-        font-size: 14px;
-    }
-    #chatgpt-toc-extension h2 {
-        font-size: 16px;
-    }
-    #chatgpt-toc-extension ul {
-        max-height: 50vh; /* Allow it to be a bit taller on smaller screens */
-    }
-}
-
-/* For very narrow desktop or large tablet screens */
-@media (max-width: 900px) {
-    #chatgpt-toc-extension {
-        /* Significantly reduce size and simplify */
-        min-width: 180px;
-        max-width: 220px;
-        padding: 12px;
-        font-size: 13px;
-    }
-    #chatgpt-toc-extension h2 {
-        margin-bottom: 8px;
-        font-size: 15px;
-    }
-    #chatgpt-toc-extension li a {
-        padding: 8px 10px;
-    }
-    #toc-search-input {
-        font-size: 13px;
-        padding: 6px 10px;
-        padding-left: 28px; /* Adjust for smaller icon */
-        padding-right: 28px;
-    }
-    .toc-search-container::before {
-        left: 10px;
-        width: 14px;
-        height: 14px;
-    }
-    #toc-search-clear {
-        width: 18px;
-        height: 18px;
-        right: 6px;
-        font-size: 12px;
-    }
+    box-shadow: var(--toc-shadow-button-hover);
 }
 
 #toc-toggle-btn:active {
     transform: translateY(0);
-    box-shadow:
-        0 1px 4px rgba(0, 0, 0, 0.4),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    box-shadow: var(--toc-shadow-button-active);
 }
 
-/* The icon for the button */
 #toc-toggle-btn::before {
     content: "-";
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    font-size: 26px; /* Increased size */
-    font-weight: 500; /* Thicker */
+    font-family: var(--toc-font-family);
+    font-size: var(--toc-font-size-xxl);
+    font-weight: 500;
     line-height: 1;
-    transition: all 0.2s ease;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-    color: #40b8cd; /* Match TOC text color */
+    transition: all var(--toc-transition-medium) ease;
+    text-shadow: 0 1px 2px var(--toc-shadow-secondary);
+    color: var(--toc-accent-primary);
 }
 
 #toc-toggle-btn::after {
@@ -355,9 +242,9 @@
         rgba(255, 255, 255, 0.2) 0%,
         transparent 70%
     );
-    border-radius: 50%;
+    border-radius: var(--toc-border-radius-full);
     transform: translate(-50%, -50%);
-    transition: all 0.3s ease;
+    transition: all var(--toc-transition-slow) ease;
     pointer-events: none;
 }
 
@@ -366,14 +253,178 @@
     height: 40px;
 }
 
+/* ===================================================================
+   Search Container
+   =================================================================== */
+
+.toc-search-container {
+    position: relative;
+    margin-bottom: var(--toc-spacing-md);
+    flex-shrink: 0;
+}
+
+.toc-search-container::before {
+    content: "";
+    position: absolute;
+    left: var(--toc-spacing-md);
+    top: 50%;
+    transform: translateY(-50%);
+    width: var(--toc-spacing-lg);
+    height: var(--toc-spacing-lg);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none'%3E%3Cpath d='M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z' fill='%2340b8cd'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+    pointer-events: none;
+    z-index: 1;
+}
+
+#toc-search-input {
+    width: 100%;
+    padding: var(--toc-spacing-sm) var(--toc-spacing-md);
+    padding-left: 32px;
+    padding-right: 32px;
+    background-color: var(--toc-bg-secondary);
+    border: 1px solid var(--toc-border-secondary);
+    border-radius: var(--toc-border-radius-md);
+    color: var(--toc-text-primary);
+    font-size: var(--toc-font-size-md);
+    font-family: inherit;
+    outline: none;
+    transition: all var(--toc-transition-medium) ease;
+    box-sizing: border-box;
+}
+
+#toc-search-input:focus {
+    border-color: var(--toc-accent-primary);
+    box-shadow: 0 0 0 2px #40b8cd33;
+}
+
+#toc-search-input::placeholder {
+    color: var(--toc-text-muted);
+}
+
+#toc-search-clear {
+    position: absolute;
+    right: var(--toc-spacing-sm);
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    background-color: var(--toc-border-secondary);
+    border-radius: var(--toc-border-radius-full);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--toc-text-muted);
+    font-size: var(--toc-font-size-md);
+    font-weight: bold;
+    transition: all var(--toc-transition-medium) ease;
+    user-select: none;
+}
+
+#toc-search-clear:hover {
+    background-color: var(--toc-bg-quaternary);
+    color: var(--toc-text-primary);
+}
+
+/* ===================================================================
+   TOC List
+   =================================================================== */
+
+#chatgpt-toc-extension ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    position: relative;
+    padding-left: 32px;
+    overflow-y: auto;
+    max-height: var(--toc-list-max-height);
+    flex: 1;
+}
+
+#chatgpt-toc-extension ul::before {
+    display: none;
+}
+
+/* List Item Connector Lines */
+#chatgpt-toc-extension li:nth-child(n + 1):not(:last-child)::after {
+    content: "";
+    position: absolute;
+    left: -20px;
+    top: 27px;
+    width: var(--toc-spacing-xs);
+    height: calc(100% + 10px);
+    background: var(--toc-gradient-primary);
+    border-radius: 2px;
+    box-shadow: 0 0 var(--toc-spacing-sm) 2px #40b8cd66;
+    z-index: 0;
+}
+
+/* List Items */
+#chatgpt-toc-extension li {
+    position: relative;
+    min-height: 22px;
+}
+
+#chatgpt-toc-extension li::before {
+    content: "";
+    position: absolute;
+    left: -25px;
+    top: 13px;
+    width: var(--toc-spacing-md);
+    height: var(--toc-spacing-md);
+    background: var(--toc-gradient-radial);
+    border-radius: var(--toc-border-radius-full);
+    box-shadow:
+        0 0 6px 1.5px #40b8cd99,
+        0 0 0 2.5px var(--toc-bg-primary);
+    color: var(--toc-text-primary);
+    font-weight: bold;
+    font-size: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+    border: 1px solid #fff2;
+    pointer-events: none;
+}
+
+/* List Item Links */
+#chatgpt-toc-extension li a {
+    display: block;
+    padding: 10px var(--toc-spacing-md);
+    text-decoration: none;
+    color: var(--toc-text-primary);
+    border-radius: var(--toc-border-radius-sm);
+    font-weight: var(--toc-font-weight-normal);
+    transition:
+        background-color var(--toc-transition-fast),
+        color var(--toc-transition-fast);
+    word-break: break-word;
+    background: transparent;
+    letter-spacing: var(--toc-letter-spacing);
+}
+
+#chatgpt-toc-extension li a:hover {
+    background-color: #40b8cd22;
+    color: var(--toc-accent-primary);
+    font-weight: var(--toc-font-weight-bold);
+    text-shadow: 0 1px 2px var(--toc-shadow-secondary);
+}
+
+/* ===================================================================
+   Collapsed State
+   =================================================================== */
+
 #chatgpt-toc-extension.collapsed {
-    /* Make it a perfect container for the button */
-    width: 48px; /* Slightly larger for the new button */
-    height: 48px;
+    width: var(--toc-collapsed-size);
+    height: var(--toc-collapsed-size);
     padding: 0;
     min-width: 0;
     max-width: none;
-    background-color: #181a2099;
+    background-color: var(--toc-overlay);
     overflow: hidden;
     display: flex;
     align-items: center;
@@ -392,43 +443,134 @@
     justify-content: center;
 }
 
-#chatgpt-toc-extension.collapsed .toc-header-content {
+#chatgpt-toc-extension.collapsed .toc-header-content,
+#chatgpt-toc-extension.collapsed h2,
+#chatgpt-toc-extension.collapsed .toc-search-container,
+#chatgpt-toc-extension.collapsed ul {
     display: none;
 }
 
-#chatgpt-toc-extension.collapsed h2 {
-    display: none; /* Hide the "Table of Contents" text */
-}
-
-#chatgpt-toc-extension.collapsed .toc-search-container {
-    display: none; /* Hide the search bar when collapsed */
-}
-
-#chatgpt-toc-extension.collapsed ul {
-    display: none; /* Hide the list completely */
-}
-
-/* Change the button icon to a plus sign when collapsed */
 #chatgpt-toc-extension.collapsed #toc-toggle-btn {
-    width: 48px;
-    height: 48px;
+    width: var(--toc-button-size-large);
+    height: var(--toc-button-size-large);
 }
 
 #chatgpt-toc-extension.collapsed #toc-toggle-btn::before {
     content: "+";
-    font-size: 28px; /* Increased size */
-    font-weight: 500; /* Thicker */
-    color: #40b8cd; /* Match TOC text color */
+    font-size: var(--toc-font-size-xxxl);
+    font-weight: 500;
+    color: var(--toc-accent-primary);
 }
 
-/* Remove rotation animation for the button */
 #chatgpt-toc-extension.collapsed #toc-toggle-btn:hover {
-    background: linear-gradient(145deg, #3a3d46, #2e3138);
-    border-color: #4a4d56;
-    color: #ffffff;
+    background: var(--toc-gradient-button-hover);
+    border-color: var(--toc-bg-quaternary);
+    color: var(--toc-text-primary);
     transform: translateY(-1px);
-    box-shadow:
-        0 4px 12px rgba(0, 0, 0, 0.4),
-        inset 0 1px 0 rgba(255, 255, 255, 0.15),
-        0 0 0 1px rgba(255, 255, 255, 0.1);
+    box-shadow: var(--toc-shadow-button-hover);
+}
+
+/* ===================================================================
+   Responsive Design
+   =================================================================== */
+
+/* Medium screens (tablets, smaller desktops) */
+@media (max-width: 1200px) {
+    :root {
+        --toc-min-width: 220px;
+        --toc-max-width: 280px;
+        --toc-font-size-base: 14px;
+        --toc-font-size-xl: 16px;
+        --toc-list-max-height: 50vh;
+    }
+
+    #chatgpt-toc-extension {
+        right: 20px;
+        top: 70px;
+    }
+}
+
+/* Small screens (large tablets) */
+@media (max-width: 900px) {
+    :root {
+        --toc-min-width: 180px;
+        --toc-max-width: 220px;
+        --toc-font-size-base: 13px;
+        --toc-font-size-xl: 15px;
+        --toc-font-size-md: 13px;
+        --toc-spacing-lg: 12px;
+    }
+
+    #chatgpt-toc-extension h2 {
+        margin-bottom: var(--toc-spacing-sm);
+    }
+
+    #chatgpt-toc-extension li a {
+        padding: var(--toc-spacing-sm) 10px;
+    }
+
+    #toc-search-input {
+        padding: 6px 10px;
+        padding-left: 28px;
+        padding-right: 28px;
+    }
+
+    .toc-search-container::before {
+        left: 10px;
+        width: var(--toc-spacing-md);
+        height: var(--toc-spacing-md);
+    }
+
+    #toc-search-clear {
+        width: 18px;
+        height: 18px;
+        right: 6px;
+        font-size: var(--toc-spacing-md);
+    }
+}
+
+/* ===================================================================
+   Print Styles
+   =================================================================== */
+
+@media print {
+    #chatgpt-toc-extension {
+        display: none !important;
+    }
+}
+
+/* ===================================================================
+   Accessibility Improvements
+   =================================================================== */
+
+/* Focus styles for keyboard navigation */
+#toc-toggle-btn:focus,
+#toc-search-input:focus,
+#chatgpt-toc-extension li a:focus {
+    outline: 2px solid var(--toc-accent-primary);
+    outline-offset: 2px;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    #chatgpt-toc-extension,
+    #chatgpt-toc-extension *,
+    #chatgpt-toc-extension *::before,
+    #chatgpt-toc-extension *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    :root {
+        --toc-bg-primary: #000000;
+        --toc-bg-secondary: #1a1a1a;
+        --toc-border-primary: #ffffff;
+        --toc-border-secondary: #cccccc;
+        --toc-text-primary: #ffffff;
+        --toc-accent-primary: #00ffff;
+    }
 }
