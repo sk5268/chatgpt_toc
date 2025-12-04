@@ -83,10 +83,16 @@ class DragManager {
     this.element = element;
     this.positionManager = positionManager;
     this.isDragging = false;
+    this.hasMoved = false;
+    this.isClickOnToggle = false;
     this.startMouseX = 0;
     this.startMouseY = 0;
     this.startElementX = 0;
     this.startElementY = 0;
+
+    // Bind methods to preserve 'this' context and allow removal
+    this.boundDrag = this.drag.bind(this);
+    this.boundStopDrag = this.stopDrag.bind(this);
 
     this.init();
   }
@@ -103,12 +109,28 @@ class DragManager {
   }
 
   startDrag(e) {
-    if (e.target.closest(`#${CONSTANTS.IDS.TOC_TOGGLE_BTN}`)) return;
+    const isToggleBtn = e.target.closest(`#${CONSTANTS.IDS.TOC_TOGGLE_BTN}`);
+    const isCollapsed = this.element.classList.contains(
+      CONSTANTS.CLASSES.COLLAPSED,
+    );
+
+    if (isToggleBtn) {
+      if (!isCollapsed) {
+        // Expanded: Toggle immediately on mousedown
+        e.preventDefault();
+        e.stopPropagation();
+        this.toggleCollapse(false); // false = collapsing
+        return;
+      }
+      // Collapsed: Proceed to allow drag
+    }
 
     e.preventDefault();
     e.stopPropagation();
 
     this.isDragging = true;
+    this.hasMoved = false;
+    this.isClickOnToggle = !!isToggleBtn;
     this.startMouseX = e.clientX;
     this.startMouseY = e.clientY;
 
@@ -123,8 +145,8 @@ class DragManager {
     );
     this.applyDragStyles();
 
-    document.addEventListener("mousemove", this.drag.bind(this));
-    document.addEventListener("mouseup", this.stopDrag.bind(this));
+    document.addEventListener("mousemove", this.boundDrag);
+    document.addEventListener("mouseup", this.boundStopDrag);
     document.body.style.userSelect = "none";
   }
 
@@ -136,6 +158,10 @@ class DragManager {
 
     const deltaX = e.clientX - this.startMouseX;
     const deltaY = e.clientY - this.startMouseY;
+
+    // Add threshold to distinguish click vs drag
+    if (!this.hasMoved && Math.abs(deltaX) < 3 && Math.abs(deltaY) < 3) return;
+    this.hasMoved = true;
 
     let newX = this.startElementX + deltaX;
     let newY = this.startElementY + deltaY;
@@ -154,7 +180,7 @@ class DragManager {
     );
   }
 
-  stopDrag() {
+  stopDrag(e) {
     if (!this.isDragging) return;
 
     this.isDragging = false;
@@ -162,10 +188,52 @@ class DragManager {
     const rect = this.element.getBoundingClientRect();
     this.positionManager.savePosition(rect.left, rect.top);
 
+    // If it was a click on the toggle button (no movement), trigger the toggle
+    if (!this.hasMoved && this.isClickOnToggle) {
+      this.toggleCollapse(true); // true = expanding
+    }
+
     this.removeDragStyles();
-    document.removeEventListener("mousemove", this.drag);
-    document.removeEventListener("mouseup", this.stopDrag);
+    document.removeEventListener("mousemove", this.boundDrag);
+    document.removeEventListener("mouseup", this.boundStopDrag);
     document.body.style.userSelect = "";
+  }
+
+  toggleCollapse(isExpanding) {
+    const rect = this.element.getBoundingClientRect();
+    const currentX = rect.left;
+    const currentY = rect.top;
+    const collapsedSize = 48; // From CSS --toc-collapsed-size
+
+    if (!isExpanding) {
+      // Collapsing: Save width and shift RIGHT
+      const expandedWidth = rect.width;
+      this.element.dataset.expandedWidth = expandedWidth;
+
+      const newX = currentX + expandedWidth - collapsedSize;
+
+      this.element.classList.add(CONSTANTS.CLASSES.COLLAPSED);
+      this.positionManager.applyPosition(this.element, newX, currentY);
+      this.positionManager.savePosition(newX, currentY);
+    } else {
+      // Expanding: Restore width and shift LEFT
+      const expandedWidth = parseFloat(this.element.dataset.expandedWidth) || 300; // Default fallback
+
+      const newX = currentX - (expandedWidth - collapsedSize);
+
+      this.element.classList.remove(CONSTANTS.CLASSES.COLLAPSED);
+
+      // Constrain in case it goes off-screen
+      const constrained = this.positionManager.constrainToViewport(
+        newX,
+        currentY,
+        expandedWidth,
+        this.element.offsetHeight // Height might change but we care about X mostly
+      );
+
+      this.positionManager.applyPosition(this.element, constrained.x, constrained.y);
+      this.positionManager.savePosition(constrained.x, constrained.y);
+    }
   }
 
   applyDragStyles() {
@@ -300,9 +368,9 @@ class DOMManager {
     const shortText =
       questionText.length > CONSTANTS.CONSTRAINTS.MAX_QUERY_LENGTH
         ? questionText.substring(
-            0,
-            CONSTANTS.CONSTRAINTS.MAX_QUERY_LENGTH - 3,
-          ) + CONSTANTS.CONSTRAINTS.TRUNCATE_SUFFIX
+          0,
+          CONSTANTS.CONSTRAINTS.MAX_QUERY_LENGTH - 3,
+        ) + CONSTANTS.CONSTRAINTS.TRUNCATE_SUFFIX
         : questionText;
 
     const questionId = `toc-question-${index}`;
@@ -519,14 +587,8 @@ class TOCExtension {
   }
 
   setupToggleButton(tocContainer) {
-    const toggleBtn = tocContainer.querySelector(
-      `#${CONSTANTS.IDS.TOC_TOGGLE_BTN}`,
-    );
-    if (toggleBtn) {
-      toggleBtn.addEventListener("click", () => {
-        tocContainer.classList.toggle(CONSTANTS.CLASSES.COLLAPSED);
-      });
-    }
+    // Click handling is now managed by DragManager to support drag-on-collapsed
+    // and prevent conflicts.
   }
 
   setupSearchFunctionality(tocContainer) {
@@ -595,7 +657,7 @@ class TOCExtension {
     if (
       event.key === "Enter" &&
       document.activeElement.id ===
-        CONSTANTS.IDS.PROMPT_TEXTAREA.replace("#", "")
+      CONSTANTS.IDS.PROMPT_TEXTAREA.replace("#", "")
     ) {
       setTimeout(() => this.createTOC(), CONSTANTS.DELAYS.ENTER_KEY);
     }
