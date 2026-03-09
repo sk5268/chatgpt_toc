@@ -30,7 +30,53 @@ const CONSTANTS = {
     COLLAPSE_BREAKPOINT: 1024,
   },
   STORAGE_KEY: "chatgpt-toc-position",
+  STORAGE_KEY_CUSTOM_NAMES: "chatgpt-toc-custom-names",
 };
+
+/**
+ * Manages custom names for TOC entries
+ */
+class CustomNameManager {
+  static saveName(chatId, originalText, newName) {
+    if (!chatId) return;
+    const allNames = this.getAllNames();
+    if (!allNames[chatId]) allNames[chatId] = {};
+
+    const key = this._generateKey(originalText);
+    if (!newName || newName.trim() === "") {
+      delete allNames[chatId][key];
+    } else {
+      allNames[chatId][key] = newName.trim();
+    }
+
+    localStorage.setItem(
+      CONSTANTS.STORAGE_KEY_CUSTOM_NAMES,
+      JSON.stringify(allNames),
+    );
+  }
+
+  static getName(chatId, originalText) {
+    if (!chatId) return null;
+    const allNames = this.getAllNames();
+    const key = this._generateKey(originalText);
+    return allNames[chatId]?.[key] || null;
+  }
+
+  static getAllNames() {
+    const saved = localStorage.getItem(CONSTANTS.STORAGE_KEY_CUSTOM_NAMES);
+    try {
+      return saved ? JSON.parse(saved) : {};
+    } catch (e) {
+      console.error("Error parsing custom names", e);
+      return {};
+    }
+  }
+
+  static _generateKey(text) {
+    // A simple unique-ish key based on content
+    return text.trim().substring(0, 200);
+  }
+}
 
 /**
  * Manages TOC positioning and persistence
@@ -364,31 +410,98 @@ class DOMManager {
     return document.createElement("ul");
   }
 
-  static createListItem(questionText, index) {
+  static createListItem(questionText, index, chatId) {
+    const customName = CustomNameManager.getName(chatId, questionText);
+    const displayName = customName || questionText;
+
     const shortText =
-      questionText.length > CONSTANTS.CONSTRAINTS.MAX_QUERY_LENGTH
-        ? questionText.substring(
+      displayName.length > CONSTANTS.CONSTRAINTS.MAX_QUERY_LENGTH
+        ? displayName.substring(
           0,
           CONSTANTS.CONSTRAINTS.MAX_QUERY_LENGTH - 3,
         ) + CONSTANTS.CONSTRAINTS.TRUNCATE_SUFFIX
-        : questionText;
+        : displayName;
 
     const questionId = `toc-question-${index}`;
     const listItem = document.createElement("li");
     listItem.setAttribute("data-toc-num", index + 1);
 
+    const wrapper = document.createElement("div");
+    wrapper.className = "toc-list-item-wrapper";
+
     const link = document.createElement("a");
     link.href = `#${questionId}`;
     link.textContent = `${index + 1}. ${shortText}`;
-    link.title = questionText;
+    link.title = displayName;
+
+    const editBtn = document.createElement("button");
+    editBtn.className = "toc-edit-btn";
+    editBtn.title = "Rename entry";
+    editBtn.innerHTML = `
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+      </svg>
+    `;
 
     link.addEventListener("click", (e) => {
       e.preventDefault();
       DOMManager.scrollToElement(questionId);
     });
 
-    listItem.appendChild(link);
+    editBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      DOMManager.enterEditMode(listItem, questionText, chatId, index, questionId);
+    });
+
+    wrapper.appendChild(link);
+    wrapper.appendChild(editBtn);
+    listItem.appendChild(wrapper);
+
     return { listItem, questionId };
+  }
+
+  static enterEditMode(listItem, originalText, chatId, index, questionId) {
+    const wrapper = listItem.querySelector(".toc-list-item-wrapper");
+    const currentName = CustomNameManager.getName(chatId, originalText) || originalText;
+
+    const input = document.createElement("input");
+    input.type = "text";
+    input.className = "toc-edit-input";
+    input.value = currentName;
+
+    const originalContent = wrapper.innerHTML;
+    wrapper.style.display = "none";
+    listItem.appendChild(input);
+    input.focus();
+    input.select();
+
+    let isExiting = false;
+    const saveAndExit = () => {
+      if (isExiting) return;
+      isExiting = true;
+
+      const newName = input.value.trim();
+      CustomNameManager.saveName(chatId, originalText, newName);
+
+      // Re-create the list item content instead of just restoring to refresh the link text
+      const { listItem: newListItem } = DOMManager.createListItem(originalText, index, chatId);
+      listItem.innerHTML = newListItem.innerHTML;
+      input.remove();
+    };
+
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        saveAndExit();
+      }
+      if (e.key === "Escape") {
+        isExiting = true;
+        input.remove();
+        wrapper.style.display = "flex";
+      }
+    });
+
+    input.addEventListener("blur", saveAndExit);
   }
 
   static scrollToElement(elementId) {
@@ -527,12 +640,13 @@ class TOCExtension {
     this.removePlasExistingTOC();
 
     const questions = QueryExtractor.extractAllQueries();
+    const chatId = this.navigationMonitor.getCurrentChatId();
     if (questions.length === 0) {
       console.log("No questions found, not creating TOC");
       return;
     }
 
-    const tocContainer = this.buildTOCStructure(questions);
+    const tocContainer = this.buildTOCStructure(questions, chatId);
     this.setupTOCFunctionality(tocContainer);
     this.applyInitialPosition(tocContainer);
 
@@ -547,13 +661,13 @@ class TOCExtension {
     }
   }
 
-  buildTOCStructure(questions) {
+  buildTOCStructure(questions, chatId) {
     const tocContainer = DOMManager.createTOCContainer();
     const tocHeader = DOMManager.createHeader();
     const searchContainer = DOMManager.createSearchContainer();
     const tocList = DOMManager.createTOCList();
 
-    this.populateTOCList(tocList, questions);
+    this.populateTOCList(tocList, questions, chatId);
 
     tocContainer.appendChild(tocHeader);
     tocContainer.appendChild(searchContainer);
@@ -562,13 +676,14 @@ class TOCExtension {
     return tocContainer;
   }
 
-  populateTOCList(tocList, questions) {
+  populateTOCList(tocList, questions, chatId) {
     const listItems = [];
 
     questions.forEach((questionText, index) => {
       const { listItem, questionId } = DOMManager.createListItem(
         questionText,
         index,
+        chatId
       );
       DOMManager.assignIdToUserMessage(index, questionId);
 

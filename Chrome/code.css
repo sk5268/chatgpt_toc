@@ -530,6 +530,83 @@
 }
 
 /* ===================================================================
+   TOC List Item Actions (Edit/Rename)
+   =================================================================== */
+
+.toc-list-item-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+#chatgpt-toc-extension li a {
+    display: block;
+    padding: 10px var(--toc-spacing-md);
+    padding-right: 40px; /* Space for the pen icon */
+    text-decoration: none;
+    color: var(--toc-text-primary);
+    border-radius: var(--toc-border-radius-sm);
+    font-weight: var(--toc-font-weight-normal);
+    transition:
+        background-color var(--toc-transition-fast),
+        color var(--toc-transition-fast);
+    word-break: break-word;
+    background: transparent;
+    letter-spacing: var(--toc-letter-spacing);
+    flex: 1;
+}
+
+.toc-edit-btn {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 24px;
+    height: 24px;
+    background-color: var(--toc-bg-tertiary);
+    border: 1px solid var(--toc-border-secondary);
+    border-radius: var(--toc-border-radius-sm);
+    display: none; /* Hidden by default */
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: all var(--toc-transition-fast) ease;
+    z-index: 3;
+    padding: 0;
+}
+
+.toc-edit-btn:hover {
+    opacity: 1;
+    background-color: var(--toc-bg-quaternary);
+    border-color: var(--toc-accent-primary);
+}
+
+#chatgpt-toc-extension li:hover .toc-edit-btn {
+    display: flex;
+}
+
+.toc-edit-btn svg {
+    width: 14px;
+    height: 14px;
+    fill: var(--toc-accent-primary);
+}
+
+.toc-edit-input {
+    width: calc(100% - 20px);
+    margin: 5px 10px;
+    padding: 6px 10px;
+    background-color: var(--toc-bg-tertiary);
+    border: 1px solid var(--toc-accent-primary);
+    border-radius: var(--toc-border-radius-sm);
+    color: var(--toc-text-primary);
+    font-size: var(--toc-font-size-md);
+    font-family: inherit;
+    outline: none;
+    box-shadow: 0 0 0 2px #40b8cd33;
+}
+
+/* ===================================================================
    Print Styles
    =================================================================== */
 
