@@ -109,7 +109,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    cursor: move;
+    cursor: grab;
     user-select: none;
     position: relative;
     gap: var(--toc-spacing-md);
@@ -135,26 +135,27 @@
     white-space: nowrap;
 }
 
-.toc-drag-handle {
+.toc-refresh-btn {
     width: 24px;
     height: 24px;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300f2fe' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='5 9 2 12 5 15'/%3E%3Cpolyline points='9 5 12 2 15 5'/%3E%3Cpolyline points='19 9 22 12 19 15'/%3E%3Cpolyline points='9 19 12 22 15 19'/%3E%3Cline x1='2' y1='12' x2='22' y2='12'/%3E%3Cline x1='12' y1='2' x2='12' y2='22'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300f2fe' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M23 4v6h-6'/%3E%3Cpath d='M20.49 15a9 9 0 1 1-2.12-9.36L23 10'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: center;
     background-size: 18px 18px;
-    opacity: 0.5;
-    cursor: grab;
+    opacity: 0.6;
+    cursor: pointer;
     transition: all var(--toc-transition-fast);
     border-radius: var(--toc-border-radius-sm);
 }
 
-.toc-drag-handle:hover {
+.toc-refresh-btn:hover {
     opacity: 1;
-    background-color: rgba(255, 255, 255, 0.08);
+    background-color: rgba(255, 255, 255, 0.12);
+    transform: rotate(30deg);
 }
 
-.toc-drag-handle:active {
-    cursor: grabbing;
+.toc-refresh-btn:active {
+    transform: rotate(180deg);
 }
 
 /* Toggle btn */

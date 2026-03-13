@@ -13,7 +13,7 @@ const CONSTANTS = {
   CLASSES: {
     TOC_HEADER: "toc-header",
     TOC_HEADER_CONTENT: "toc-header-content",
-    TOC_DRAG_HANDLE: "toc-drag-handle",
+    TOC_REFRESH_BTN: "toc-refresh-btn",
     TOC_SEARCH_CONTAINER: "toc-search-container",
     COLLAPSED: "collapsed",
   },
@@ -156,9 +156,12 @@ class DragManager {
 
   startDrag(e) {
     const isToggleBtn = e.target.closest(`#${CONSTANTS.IDS.TOC_TOGGLE_BTN}`);
+    const isRefreshBtn = e.target.closest(`.${CONSTANTS.CLASSES.TOC_REFRESH_BTN}`);
     const isCollapsed = this.element.classList.contains(
       CONSTANTS.CLASSES.COLLAPSED,
     );
+
+    if (isRefreshBtn) return;
 
     if (isToggleBtn) {
       if (!isCollapsed) {
@@ -376,9 +379,9 @@ class DOMManager {
     const headerContent = document.createElement("div");
     headerContent.className = CONSTANTS.CLASSES.TOC_HEADER_CONTENT;
 
-    const dragHandle = document.createElement("div");
-    dragHandle.className = CONSTANTS.CLASSES.TOC_DRAG_HANDLE;
-    dragHandle.title = "Drag to move";
+    const refreshBtn = document.createElement("div");
+    refreshBtn.className = CONSTANTS.CLASSES.TOC_REFRESH_BTN;
+    refreshBtn.title = "Refresh Table of Contents";
 
     const title = document.createElement("h2");
     title.textContent = "Table of Contents";
@@ -395,7 +398,7 @@ class DOMManager {
       </svg>
     `;
 
-    headerContent.appendChild(dragHandle);
+    headerContent.appendChild(refreshBtn);
     headerContent.appendChild(title);
     header.appendChild(headerContent);
     header.appendChild(toggleBtn);
@@ -722,6 +725,7 @@ class TOCExtension {
     this.setupToggleButton(tocContainer);
     this.setupSearchFunctionality(tocContainer);
     this.setupDragFunctionality(tocContainer);
+    this.setupRefreshFunctionality(tocContainer);
     this.setupResponsiveCollapse(tocContainer);
   }
 
@@ -749,6 +753,19 @@ class TOCExtension {
 
   setupDragFunctionality(tocContainer) {
     this.dragManager = new DragManager(tocContainer, PositionManager);
+  }
+
+  setupRefreshFunctionality(tocContainer) {
+    const refreshBtn = tocContainer.querySelector(
+      `.${CONSTANTS.CLASSES.TOC_REFRESH_BTN}`,
+    );
+    if (refreshBtn) {
+      refreshBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.createTOC();
+      });
+    }
   }
 
   setupResponsiveCollapse(tocContainer) {
