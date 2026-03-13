@@ -13,7 +13,6 @@ const CONSTANTS = {
   CLASSES: {
     TOC_HEADER: "toc-header",
     TOC_HEADER_CONTENT: "toc-header-content",
-    TOC_REFRESH_BTN: "toc-refresh-btn",
     TOC_SEARCH_CONTAINER: "toc-search-container",
     COLLAPSED: "collapsed",
   },
@@ -144,24 +143,26 @@ class DragManager {
   }
 
   init() {
+    // Listen on the entire container element for mousedown
+    this.element.addEventListener("mousedown", this.startDrag.bind(this));
+    // Apply cursor style to the header to indicate it's draggable
     const header = this.element.querySelector(
       `.${CONSTANTS.CLASSES.TOC_HEADER}`,
     );
-    if (!header) return;
-
-    header.style.cursor = "move";
-    header.style.userSelect = "none";
-    header.addEventListener("mousedown", this.startDrag.bind(this));
+    if (header) {
+      header.style.cursor = "grab";
+    }
   }
 
   startDrag(e) {
     const isToggleBtn = e.target.closest(`#${CONSTANTS.IDS.TOC_TOGGLE_BTN}`);
-    const isRefreshBtn = e.target.closest(`.${CONSTANTS.CLASSES.TOC_REFRESH_BTN}`);
+    const isInteractive = e.target.closest("input, a, button, .toc-list-item-wrapper, ul");
     const isCollapsed = this.element.classList.contains(
       CONSTANTS.CLASSES.COLLAPSED,
     );
 
-    if (isRefreshBtn) return;
+    // If it's an interactive element but NOT the toggle button, don't drag
+    if (isInteractive && !isToggleBtn) return;
 
     if (isToggleBtn) {
       if (!isCollapsed) {
@@ -379,10 +380,6 @@ class DOMManager {
     const headerContent = document.createElement("div");
     headerContent.className = CONSTANTS.CLASSES.TOC_HEADER_CONTENT;
 
-    const refreshBtn = document.createElement("div");
-    refreshBtn.className = CONSTANTS.CLASSES.TOC_REFRESH_BTN;
-    refreshBtn.title = "Refresh Table of Contents";
-
     const title = document.createElement("h2");
     title.textContent = "Table of Contents";
 
@@ -398,7 +395,6 @@ class DOMManager {
       </svg>
     `;
 
-    headerContent.appendChild(refreshBtn);
     headerContent.appendChild(title);
     header.appendChild(headerContent);
     header.appendChild(toggleBtn);
@@ -559,63 +555,25 @@ class QueryExtractor {
 /**
  * Handles URL monitoring and chat change detection
  */
-class NavigationMonitor {
-  constructor(callback) {
-    this.callback = callback;
-    this.currentChatId = null;
-    this.lastUrl = location.href;
-
-    this.init();
-  }
-
-  init() {
-    this.currentChatId = this.getCurrentChatId();
-    this.setupMutationObserver();
-    window.addEventListener("popstate", this.checkForChatChange.bind(this));
-  }
-
-  getCurrentChatId() {
-    const url = window.location.href;
-    const match = url.match(/chatgpt\.com\/c\/([^/?#]+)/);
-    return match ? match[1] : null;
-  }
-
-  checkForChatChange() {
-    const newChatId = this.getCurrentChatId();
-    if (newChatId !== this.currentChatId) {
-      console.log(`Chat changed from ${this.currentChatId} to ${newChatId}`);
-      this.currentChatId = newChatId;
-      setTimeout(() => this.callback(), CONSTANTS.DELAYS.CHAT_CHANGE);
-    }
-  }
-
-  setupMutationObserver() {
-    new MutationObserver(() => {
-      const url = location.href;
-      if (url !== this.lastUrl) {
-        this.lastUrl = url;
-        this.checkForChatChange();
-      }
-    }).observe(document, { subtree: true, childList: true });
-  }
-}
-
-/**
- * Main TOC Extension class
- */
 class TOCExtension {
   constructor() {
     this.searchManager = null;
     this.dragManager = null;
-    this.navigationMonitor = null;
+    this.lastQueriesJson = "";
 
     this.init();
   }
 
   init() {
     this.setupEventListeners();
-    this.navigationMonitor = new NavigationMonitor(this.createTOC.bind(this));
+    this.startHeartbeat();
     this.delayedCreateTOC();
+  }
+
+  startHeartbeat() {
+    setInterval(() => {
+      this.createTOC(true); // true = heartbeat mode
+    }, 5000);
   }
 
   setupEventListeners() {
@@ -656,15 +614,36 @@ class TOCExtension {
     }, CONSTANTS.DELAYS.PAGE_LOAD);
   }
 
-  createTOC() {
-    this.removePlasExistingTOC();
+  getCurrentChatId() {
+    const url = window.location.href;
+    const match = url.match(/chatgpt\.com\/c\/([^/?#]+)/);
+    return match ? match[1] : null;
+  }
 
+  createTOC(isHeartbeat = false) {
     const questions = QueryExtractor.extractAllQueries();
-    const chatId = this.navigationMonitor.getCurrentChatId();
+    const chatId = this.getCurrentChatId();
+
+    // Skip if no questions
     if (questions.length === 0) {
-      console.log("No questions found, not creating TOC");
+      if (document.getElementById(CONSTANTS.IDS.TOC_CONTAINER)) {
+        this.removePlasExistingTOC();
+      }
       return;
     }
+
+    // Smart Refresh Check:
+    // Don't rebuild if:
+    // 1. Content hasn't changed (number and text)
+    // 2. User is currently editing a name
+    const queriesJson = JSON.stringify({ chatId, questions });
+    const isEditing = !!document.querySelector(".toc-edit-input");
+
+    if (isHeartbeat && queriesJson === this.lastQueriesJson) return;
+    if (isEditing) return;
+
+    this.lastQueriesJson = queriesJson;
+    this.removePlasExistingTOC();
 
     const tocContainer = this.buildTOCStructure(questions, chatId);
     this.setupTOCFunctionality(tocContainer);
@@ -672,13 +651,13 @@ class TOCExtension {
 
     document.body.appendChild(tocContainer);
 
-    // Lock the dynamic right-anchoring into static left-anchoring so it doesn't arbitrarily drift when the window is enlarged
+    // Lock position if not saved
     if (!PositionManager.getSavedPosition()) {
       const rect = tocContainer.getBoundingClientRect();
       PositionManager.applyPosition(tocContainer, rect.left, rect.top);
     }
 
-    console.log("TOC created successfully");
+    console.log("TOC updated");
   }
 
   removePlasExistingTOC() {
@@ -725,7 +704,6 @@ class TOCExtension {
     this.setupToggleButton(tocContainer);
     this.setupSearchFunctionality(tocContainer);
     this.setupDragFunctionality(tocContainer);
-    this.setupRefreshFunctionality(tocContainer);
     this.setupResponsiveCollapse(tocContainer);
   }
 
@@ -753,19 +731,6 @@ class TOCExtension {
 
   setupDragFunctionality(tocContainer) {
     this.dragManager = new DragManager(tocContainer, PositionManager);
-  }
-
-  setupRefreshFunctionality(tocContainer) {
-    const refreshBtn = tocContainer.querySelector(
-      `.${CONSTANTS.CLASSES.TOC_REFRESH_BTN}`,
-    );
-    if (refreshBtn) {
-      refreshBtn.addEventListener("click", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        this.createTOC();
-      });
-    }
   }
 
   setupResponsiveCollapse(tocContainer) {
