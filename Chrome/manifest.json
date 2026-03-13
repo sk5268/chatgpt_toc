@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "ChatGPT Table of Content",
-  "version": "1.9",
+  "version": "2.0",
   "description": "Adds a Table of Contents to ChatGPT.com",
   "icons": {
     "48": "icons/icon48.png",

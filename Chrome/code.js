@@ -249,32 +249,41 @@ class DragManager {
     const rect = this.element.getBoundingClientRect();
     const currentX = rect.left;
     const currentY = rect.top;
-    const collapsedSize = 48; // From CSS --toc-collapsed-size
+    const toggleBtn = this.element.querySelector(`#${CONSTANTS.IDS.TOC_TOGGLE_BTN}`);
 
     if (!isExpanding) {
-      // Collapsing: Save width and shift RIGHT
-      const expandedWidth = rect.width;
-      this.element.dataset.expandedWidth = expandedWidth;
+      // Collapsing: Find button's exact screen position
+      const btnRect = toggleBtn.getBoundingClientRect();
+      const newX = btnRect.left;
+      const newY = btnRect.top;
 
-      const newX = currentX + expandedWidth - collapsedSize;
+      // Save width and offsets for precise restoration
+      this.element.dataset.expandedWidth = rect.width;
+      this.element.dataset.offsetX = (btnRect.left - rect.left).toString();
+      this.element.dataset.offsetY = (btnRect.top - rect.top).toString();
 
       this.element.classList.add(CONSTANTS.CLASSES.COLLAPSED);
-      this.positionManager.applyPosition(this.element, newX, currentY);
-      this.positionManager.savePosition(newX, currentY);
+      this.positionManager.applyPosition(this.element, newX, newY);
+      this.positionManager.savePosition(newX, newY);
     } else {
-      // Expanding: Restore width and shift LEFT
-      const expandedWidth = parseFloat(this.element.dataset.expandedWidth) || 300; // Default fallback
+      // Expanding: Restore using saved exact offsets
+      const expandedWidth = parseFloat(this.element.dataset.expandedWidth) || 300;
 
-      const newX = currentX - (expandedWidth - collapsedSize);
+      // Fallbacks roughly match CSS spacing (top padding 16px + 1px border) and right-side button alignment
+      const offsetX = parseFloat(this.element.dataset.offsetX) || (expandedWidth - 32 - 25);
+      const offsetY = parseFloat(this.element.dataset.offsetY) || 17;
+
+      const newX = currentX - offsetX;
+      const newY = currentY - offsetY;
 
       this.element.classList.remove(CONSTANTS.CLASSES.COLLAPSED);
 
       // Constrain in case it goes off-screen
       const constrained = this.positionManager.constrainToViewport(
         newX,
-        currentY,
+        newY,
         expandedWidth,
-        this.element.offsetHeight // Height might change but we care about X mostly
+        this.element.offsetHeight
       );
 
       this.positionManager.applyPosition(this.element, constrained.x, constrained.y);
@@ -377,6 +386,14 @@ class DOMManager {
     const toggleBtn = document.createElement("button");
     toggleBtn.id = CONSTANTS.IDS.TOC_TOGGLE_BTN;
     toggleBtn.title = "Toggle Table of Contents";
+    toggleBtn.innerHTML = `
+      <svg class="toc-icon-minimize" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M18 15L12 9L6 15" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <svg class="toc-icon-maximize" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    `;
 
     headerContent.appendChild(dragHandle);
     headerContent.appendChild(title);
@@ -431,7 +448,7 @@ class DOMManager {
 
     const link = document.createElement("a");
     link.href = `#${questionId}`;
-    link.textContent = `${index + 1}. ${shortText}`;
+    link.innerHTML = `<span style="color: var(--toc-accent-primary)">${index + 1}.</span> ${shortText}`;
     link.title = displayName;
 
     const editBtn = document.createElement("button");
@@ -651,6 +668,13 @@ class TOCExtension {
     this.applyInitialPosition(tocContainer);
 
     document.body.appendChild(tocContainer);
+
+    // Lock the dynamic right-anchoring into static left-anchoring so it doesn't arbitrarily drift when the window is enlarged
+    if (!PositionManager.getSavedPosition()) {
+      const rect = tocContainer.getBoundingClientRect();
+      PositionManager.applyPosition(tocContainer, rect.left, rect.top);
+    }
+
     console.log("TOC created successfully");
   }
 
@@ -756,7 +780,9 @@ class TOCExtension {
       tocContainer.offsetHeight,
     );
 
-    if (constrained.x !== rect.left || constrained.y !== rect.top) {
+    // Only physically manipulate the DOM if it's genuinely pushed out of the viewport bounds
+    // This stops it from arbitrarily dragging or reacting to normal window stretches
+    if (Math.abs(constrained.x - rect.left) > 1 || Math.abs(constrained.y - rect.top) > 1) {
       PositionManager.applyPosition(tocContainer, constrained.x, constrained.y);
       PositionManager.savePosition(constrained.x, constrained.y);
     }
